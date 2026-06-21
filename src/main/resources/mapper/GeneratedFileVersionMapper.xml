@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.javaee.docmanager.ai.mapper.GeneratedFileVersionMapper">
+
+    <insert id="insert" parameterType="com.javaee.docmanager.ai.entity.GeneratedFileVersion">
+        INSERT INTO generated_file_version
+            (id, file_id, version_number, title, object_key, section_count, change_log, status, create_by, create_time)
+        VALUES
+            (#{id}, #{fileId}, #{versionNumber}, #{title}, #{objectKey}, #{sectionCount}, #{changeLog}, #{status}, #{createBy}, #{createTime})
+    </insert>
+
+    <select id="selectById" resultType="com.javaee.docmanager.ai.entity.GeneratedFileVersion">
+        SELECT * FROM generated_file_version WHERE id = #{id}
+    </select>
+
+    <select id="selectByFileId" resultType="com.javaee.docmanager.ai.entity.GeneratedFileVersion">
+        SELECT * FROM generated_file_version WHERE file_id = #{fileId} ORDER BY version_number DESC
+    </select>
+
+    <select id="selectDraftByFileId" resultType="com.javaee.docmanager.ai.entity.GeneratedFileVersion">
+        SELECT * FROM generated_file_version
+        WHERE file_id = #{fileId} AND status = 'draft'
+        ORDER BY version_number DESC LIMIT 1
+    </select>
+
+    <select id="selectMaxVersionNumber" resultType="int">
+        SELECT COALESCE(MAX(version_number), 0) FROM generated_file_version WHERE file_id = #{fileId}
+    </select>
+
+    <select id="selectOldestByFileId" resultType="com.javaee.docmanager.ai.entity.GeneratedFileVersion">
+        SELECT * FROM generated_file_version WHERE file_id = #{fileId} ORDER BY version_number ASC LIMIT 1
+    </select>
+
+    <select id="countByFileId" resultType="int">
+        SELECT COUNT(*) FROM generated_file_version WHERE file_id = #{fileId}
+    </select>
+
+    <delete id="deleteDraftsByFileId">
+        DELETE FROM generated_file_version WHERE file_id = #{fileId} AND status = 'draft'
+    </delete>
+
+    <delete id="deleteByFileId">
+        DELETE FROM generated_file_version WHERE file_id = #{fileId}
+    </delete>
+
+    <delete id="deleteById">
+        DELETE FROM generated_file_version WHERE id = #{id}
+    </delete>
+
+    <update id="updateStatus">
+        UPDATE generated_file_version SET status = #{status} WHERE id = #{id}
+    </update>
+
+</mapper>

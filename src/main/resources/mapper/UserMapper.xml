@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.javaee.docmanager.user.mapper.UserMapper">
+
+    <select id="selectByUsername" resultType="com.javaee.docmanager.user.entity.User">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+
+    <select id="selectByEmail" resultType="com.javaee.docmanager.user.entity.User">
+        SELECT * FROM user WHERE email = #{email}
+    </select>
+
+    <select id="selectByPhone" resultType="com.javaee.docmanager.user.entity.User">
+        SELECT * FROM user WHERE phone = #{phone}
+    </select>
+
+    <select id="selectById" resultType="com.javaee.docmanager.user.entity.User">
+        SELECT * FROM user WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.javaee.docmanager.user.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, password, email, phone, role, status,
+            rag_tokens_input, rag_tokens_output, ppt_tokens_input, ppt_tokens_output,
+            rag_doc_count, rag_slice_count, ppt_count, create_time, update_time)
+        VALUES (#{username}, #{password}, #{email}, #{phone}, #{role}, #{status},
+            0, 0, 0, 0, 0, 0, 0, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="updateById" parameterType="com.javaee.docmanager.user.entity.User">
+        UPDATE user
+        SET username = #{username}, email = #{email}, phone = #{phone}, role = #{role},
+            status = #{status}, update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementField">
+        UPDATE user SET ${field} = ${field} + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="incrementRagTokensInput">
+        UPDATE user SET rag_tokens_input = rag_tokens_input + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="incrementRagTokensOutput">
+        UPDATE user SET rag_tokens_output = rag_tokens_output + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="incrementPptTokensInput">
+        UPDATE user SET ppt_tokens_input = ppt_tokens_input + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="incrementPptTokensOutput">
+        UPDATE user SET ppt_tokens_output = ppt_tokens_output + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="incrementRagDocCount">
+        UPDATE user SET rag_doc_count = rag_doc_count + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="incrementRagSliceCount">
+        UPDATE user SET rag_slice_count = rag_slice_count + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="incrementPptCount">
+        UPDATE user SET ppt_count = ppt_count + #{delta}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="batchUpdateCounters">
+        UPDATE user SET
+            rag_tokens_input = #{ragTokensInput},
+            rag_tokens_output = #{ragTokensOutput},
+            ppt_tokens_input = #{pptTokensInput},
+            ppt_tokens_output = #{pptTokensOutput},
+            rag_doc_count = #{ragDocCount},
+            rag_slice_count = #{ragSliceCount},
+            ppt_count = #{pptCount},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="resetCounters">
+        UPDATE user SET rag_tokens_input = 0, rag_tokens_output = 0,
+            ppt_tokens_input = 0, ppt_tokens_output = 0,
+            rag_doc_count = 0, rag_slice_count = 0, ppt_count = 0,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM user WHERE id = #{id}
+    </delete>
+
+    <select id="selectAllActive" resultType="com.javaee.docmanager.user.entity.User">
+        SELECT id, username, role, email, status FROM user WHERE status = 1 ORDER BY id
+    </select>
+
+    <select id="selectAllForManage" resultType="com.javaee.docmanager.user.entity.User">
+        SELECT id, username, role, email, phone, status, create_time, update_time
+        FROM user ORDER BY id
+    </select>
+
+    <update id="updatePassword">
+        UPDATE user SET password = #{password}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE user SET status = #{status}, update_time = NOW() WHERE id = #{id}
+    </update>
+
+</mapper>

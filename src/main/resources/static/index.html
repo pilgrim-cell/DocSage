@@ -1,0 +1,3005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocSage - 智能文档管理平台</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --primary-light: #8B5CF6;
+            --primary-dark: #6D28D9;
+            --primary-glow: rgba(124,58,237,0.25);
+            --accent: #F97316;
+            --accent-light: #FB923C;
+            --bg: #0F172A;
+            --bg-card: #1E293B;
+            --bg-elevated: #334155;
+            --bg-sidebar: #1E293B;
+            --text: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --text-light: #64748B;
+            --border: #334155;
+            --border-light: #475569;
+            --success: #22C55E;
+            --success-bg: rgba(34,197,94,0.15);
+            --danger: #EF4444;
+            --danger-bg: rgba(239,68,68,0.15);
+            --warning: #EAB308;
+            --warning-bg: rgba(234,179,8,0.15);
+            --radius: 8px;
+            --radius-sm: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+            --font: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-code: 'Fira Code', 'Cascadia Code', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+        a { color: var(--primary-light); text-decoration: none; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+        code, pre { font-family: var(--font-code); }
+
+        /* ===== Login Page ===== */
+        .login-container {
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #312E81 100%);
+            position: relative; overflow: hidden;
+        }
+        .login-container::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(124,58,237,0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(249,115,22,0.1) 0%, transparent 50%);
+        }
+        .login-box {
+            background: var(--bg-card); border-radius: 16px; padding: 48px 40px; width: 420px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5); position: relative; z-index: 1;
+            border: 1px solid var(--border);
+        }
+        .login-box h1 { text-align: center; color: var(--text); margin-bottom: 6px; font-size: 28px; font-weight: 700; }
+        .login-box .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 32px; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-muted); font-size: 13px; }
+        .form-group input {
+            width: 100%; padding: 12px 16px; border: 1.5px solid var(--border-light); border-radius: var(--radius-sm);
+            font-size: 14px; font-family: var(--font); transition: all 0.2s; background: var(--bg);
+            color: var(--text);
+        }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .form-group input::placeholder { color: var(--text-light); }
+
+        /* ===== Buttons ===== */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-size: 13px;
+            font-weight: 600; font-family: var(--font); cursor: pointer; transition: all 0.2s;
+            letter-spacing: 0.01em;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 12px var(--primary-glow); }
+        .btn-secondary { background: transparent; color: var(--primary-light); border: 1.5px solid var(--primary); }
+        .btn-secondary:hover { background: var(--primary-glow); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover { background: #16A34A; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: #DC2626; }
+        .btn-warning { background: var(--accent); color: #fff; }
+        .btn-warning:hover { background: var(--accent-light); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btns .btn { min-width: 60px; }
+        .switch-link { text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-muted); }
+        .switch-link a { color: var(--primary-light); cursor: pointer; font-weight: 500; }
+        .error-msg { color: var(--danger); font-size: 13px; margin-top: 8px; }
+        .success-msg { color: var(--success); font-size: 13px; margin-top: 8px; }
+
+        /* ===== Main Layout ===== */
+        .app-layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 240px; background: var(--bg-sidebar); color: #fff; flex-shrink: 0;
+            position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100;
+            display: flex; flex-direction: column; border-right: 1px solid var(--border);
+        }
+        .sidebar-header {
+            padding: 24px 20px; font-size: 20px; font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px; letter-spacing: -0.02em;
+            background: linear-gradient(180deg, rgba(124,58,237,0.08) 0%, transparent 100%);
+        }
+        .sidebar-header .logo { width: 36px; height: 36px; border-radius: 10px; object-fit: cover; }
+        .nav-section { padding: 8px 0; }
+        .nav-section-title {
+            padding: 12px 24px 6px; font-size: 10px; text-transform: uppercase;
+            color: var(--text-light); letter-spacing: 1.5px; font-weight: 600;
+        }
+        .nav-item {
+            padding: 10px 24px; cursor: pointer; display: flex; align-items: center; gap: 12px;
+            font-size: 13px; transition: all 0.2s; color: var(--text-muted); margin: 2px 8px;
+            border-radius: var(--radius); font-weight: 500; border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: var(--primary-glow); color: var(--text); border-left-color: var(--primary-light); }
+        .nav-item.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow); border-left-color: var(--accent); }
+        .nav-item .icon { width: 20px; text-align: center; font-size: 15px; }
+
+        .main-content { margin-left: 240px; flex: 1; padding: 28px 32px; min-height: 100vh; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .page-header h2 { font-size: 24px; color: var(--text); font-weight: 700; letter-spacing: -0.02em; }
+        .page-header p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+        .user-info { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 13px; }
+        .user-info .avatar {
+            width: 34px; height: 34px; background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 14px;
+        }
+        .logout-btn { color: var(--danger); cursor: pointer; font-size: 13px; font-weight: 500; }
+
+        /* ===== Bento Grid Cards ===== */
+        .bento-grid {
+            display: grid; gap: 16px;
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .bento-grid .span-2 { grid-column: span 2; }
+        .bento-grid .span-3 { grid-column: span 3; }
+        .bento-grid .span-4 { grid-column: span 4; }
+        .bento-grid .span-row-2 { grid-row: span 2; }
+
+        .bento-card {
+            background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 24px; transition: all 0.25s ease; border: 1px solid var(--border);
+            position: relative; overflow: hidden;
+        }
+        .bento-card:hover { box-shadow: 0 0 20px var(--primary-glow); border-color: var(--primary); }
+        .bento-card.accent-top { border-top: 3px solid var(--primary); }
+        .bento-card.accent-left { border-left: 3px solid var(--primary); }
+
+        .bento-card .card-title {
+            font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 16px;
+        }
+
+        /* ===== Stat Cards (Bento style) ===== */
+        .stat-bento {
+            background: var(--bg-card); border-radius: var(--radius); padding: 24px;
+            box-shadow: var(--shadow); transition: all 0.25s; border: 1px solid var(--border);
+            position: relative; overflow: hidden;
+        }
+        .stat-bento:hover { box-shadow: 0 0 20px var(--primary-glow); transform: translateY(-2px); border-color: var(--primary); }
+        .stat-bento .stat-icon {
+            width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 20px; margin-bottom: 16px;
+        }
+        .stat-bento .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-bento .stat-value { font-size: 32px; font-weight: 700; margin-top: 4px; letter-spacing: -0.03em; }
+
+        .stat-bento.blue { background: linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(124,58,237,0.05) 100%); }
+        .stat-bento.blue .stat-icon { background: var(--primary-glow); color: var(--primary-light); }
+        .stat-bento.blue .stat-value { color: var(--primary-light); }
+
+        .stat-bento.green { background: linear-gradient(135deg, var(--success-bg) 0%, rgba(34,197,94,0.05) 100%); }
+        .stat-bento.green .stat-icon { background: var(--success-bg); color: var(--success); }
+        .stat-bento.green .stat-value { color: var(--success); }
+
+        .stat-bento.orange { background: linear-gradient(135deg, rgba(249,115,22,0.15) 0%, rgba(249,115,22,0.05) 100%); }
+        .stat-bento.orange .stat-icon { background: rgba(249,115,22,0.2); color: var(--accent); }
+        .stat-bento.orange .stat-value { color: var(--accent); }
+
+        .stat-bento.red { background: linear-gradient(135deg, var(--danger-bg) 0%, rgba(239,68,68,0.05) 100%); }
+        .stat-bento.red .stat-icon { background: var(--danger-bg); color: var(--danger); }
+        .stat-bento.red .stat-value { color: var(--danger); }
+
+        /* ===== Table ===== */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th {
+            background: var(--bg); padding: 10px 14px; text-align: left; font-size: 11px;
+            color: var(--text-muted); border-bottom: 2px solid var(--border); font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .data-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); }
+        .data-table tr:hover td { background: var(--bg-elevated); }
+
+        /* ===== Form ===== */
+        .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+        textarea {
+            width: 100%; padding: 12px 16px; border: 1.5px solid var(--border-light); border-radius: var(--radius-sm);
+            font-size: 14px; resize: vertical; font-family: var(--font); transition: all 0.2s;
+            background: var(--bg); color: var(--text);
+        }
+        textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        textarea::placeholder { color: var(--text-light); }
+        select {
+            width: 100%; padding: 12px 16px; border: 1.5px solid var(--border-light); border-radius: var(--radius-sm);
+            font-size: 14px; background: var(--bg); font-family: var(--font); color: var(--text);
+        }
+        select:focus { outline: none; border-color: var(--primary); }
+
+        /* ===== Tags ===== */
+        .tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+        .tag-blue { background: var(--primary-glow); color: var(--primary-light); }
+        .tag-green { background: var(--success-bg); color: var(--success); }
+        .tag-orange { background: rgba(249,115,22,0.2); color: var(--accent); }
+        .tag-red { background: var(--danger-bg); color: var(--danger); }
+        .tag-gray { background: var(--bg-elevated); color: var(--text-muted); }
+
+        /* ===== Chat ===== */
+        .chat-container { display: flex; flex-direction: column; height: calc(100vh - 180px); }
+        .chat-messages {
+            flex: 2; overflow-y: auto; padding: 20px; background: var(--bg);
+            border-radius: var(--radius); margin-bottom: 10px; min-height: 0;
+            border: 1px solid var(--border);
+        }
+        .chat-msg { margin-bottom: 14px; display: flex; }
+        .chat-msg.user { justify-content: flex-end; }
+        .chat-msg .bubble { max-width: 70%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; }
+        .chat-msg.user .bubble {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-msg.assistant .bubble { background: var(--bg-elevated); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .chat-input { position: relative; flex: 1; display: flex; flex-direction: column; }
+        .chat-input textarea {
+            width: 100%; flex: 1; padding: 16px 18px; padding-bottom: 54px;
+            border: 1.5px solid var(--border-light); border-radius: var(--radius); font-size: 14px;
+            resize: none; line-height: 1.6; font-family: var(--font); background: var(--bg-card);
+            color: var(--text);
+        }
+        .chat-input textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .chat-input textarea::placeholder { color: var(--text-light); }
+        .chat-input .btn-send {
+            position: absolute; bottom: 14px; right: 14px; width: 42px; height: 42px;
+            border-radius: 12px; border: none;
+            background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff;
+            font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; box-shadow: 0 2px 8px var(--primary-glow);
+        }
+        .chat-input .btn-send:hover { transform: scale(1.05); box-shadow: 0 4px 16px var(--primary-glow); }
+        .chat-input .btn-send:disabled { background: var(--border); box-shadow: none; cursor: not-allowed; transform: none; }
+
+        /* ===== Drag Handle ===== */
+        .drag-handle {
+            height: 8px; flex-shrink: 0; cursor: ns-resize; position: relative;
+            user-select: none; display: flex; align-items: center; justify-content: center;
+        }
+        .drag-handle::after { content: ''; width: 40px; height: 4px; border-radius: 2px; background: var(--border-light); transition: background 0.15s; }
+        .drag-handle:hover::after, .drag-handle.dragging::after { background: var(--primary-light); }
+
+        /* ===== Upload Zone ===== */
+        .upload-zone {
+            border: 2px dashed var(--border-light); border-radius: var(--radius); padding: 48px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg-card);
+        }
+        .upload-zone:hover { border-color: var(--primary); background: var(--primary-glow); }
+        .upload-zone input { display: none; }
+        .upload-zone .icon { font-size: 48px; color: var(--text-light); margin-bottom: 12px; }
+        .upload-zone p { color: var(--text-muted); font-size: 14px; }
+
+        /* ===== Modal ===== */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal {
+            background: var(--bg-card); border-radius: 16px; padding: 28px;
+            width: 600px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+        }
+        .modal h3 { margin-bottom: 16px; font-size: 18px; font-weight: 700; color: var(--text); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+        /* ===== Pagination ===== */
+        .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
+        .pagination button {
+            padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--bg-card); cursor: pointer; font-size: 13px; font-family: var(--font);
+            transition: all 0.15s; color: var(--text-secondary);
+        }
+        .pagination button:hover { border-color: var(--primary); color: var(--primary-light); }
+        .pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ===== Loading / Toast ===== */
+        .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+        .spinner {
+            display: inline-block; width: 24px; height: 24px;
+            border: 3px solid var(--border); border-top-color: var(--primary-light);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .toast {
+            position: fixed; top: 20px; right: 20px; padding: 14px 22px; border-radius: var(--radius-sm);
+            color: #fff; font-size: 14px; font-weight: 500; z-index: 2000;
+            animation: slideIn 0.3s ease; box-shadow: var(--shadow-md);
+        }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* ===== Search Bar ===== */
+        .search-bar { display: flex; gap: 12px; margin-bottom: 16px; }
+        .search-bar input {
+            flex: 1; padding: 10px 16px; border: 1.5px solid var(--border-light); border-radius: var(--radius-sm);
+            font-size: 14px; font-family: var(--font); transition: all 0.2s;
+            background: var(--bg-card); color: var(--text);
+        }
+        .search-bar input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .search-bar input::placeholder { color: var(--text-light); }
+
+        /* ===== Empty State ===== */
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--text-light); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+
+        /* ===== Version / File List ===== */
+        .version-list { list-style: none; }
+        .version-list li {
+            padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex;
+            justify-content: space-between; align-items: center; transition: background 0.15s;
+            color: var(--text-secondary);
+        }
+        .version-list li:hover { background: var(--bg-elevated); }
+
+        .file-list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 14px; border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .file-list-item:hover { background: var(--bg-elevated); }
+        .file-info { display: flex; align-items: center; gap: 10px; }
+        .file-icon {
+            width: 40px; height: 40px; background: var(--primary-glow); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+            color: var(--primary-light);
+        }
+
+        /* ===== Health Grid ===== */
+        .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .health-item { padding: 14px; border-radius: var(--radius-sm); text-align: center; }
+        .health-item.up { background: var(--success-bg); color: var(--success); }
+        .health-item.down { background: var(--danger-bg); color: var(--danger); }
+        .health-item .name { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+        .health-item .status { font-size: 18px; font-weight: 700; }
+
+        /* ===== Typing Indicator ===== */
+        .typing-indicator {
+            display: flex; gap: 4px; padding: 12px 18px; background: var(--bg-elevated);
+            border-radius: 16px; border-bottom-left-radius: 4px;
+            border: 1px solid var(--border); width: fit-content;
+        }
+        .typing-indicator span {
+            width: 8px; height: 8px; background: var(--text-muted); border-radius: 50%;
+            animation: typing-bounce 1.4s ease-in-out infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing-bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* ===== Markdown / Code Content ===== */
+        .chat-msg.assistant .bubble pre {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+            padding: 12px 16px; overflow-x: auto; margin: 8px 0; font-family: var(--font-code);
+            font-size: 13px; color: var(--text-secondary);
+        }
+        .chat-msg.assistant .bubble code {
+            background: var(--bg); padding: 2px 6px; border-radius: 4px;
+            font-family: var(--font-code); font-size: 13px; color: var(--accent-light);
+        }
+        .chat-msg.assistant .bubble pre code { background: none; padding: 0; color: inherit; }
+        .chat-msg.assistant .bubble table { border-collapse: collapse; margin: 8px 0; width: 100%; }
+        .chat-msg.assistant .bubble th, .chat-msg.assistant .bubble td {
+            border: 1px solid var(--border); padding: 8px 12px; text-align: left; font-size: 13px;
+        }
+        .chat-msg.assistant .bubble th { background: var(--bg); color: var(--text-muted); font-weight: 600; }
+
+        /* ===== Source Cards (RAG) ===== */
+        .source-card {
+            background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--primary);
+            border-radius: var(--radius-sm); padding: 12px 16px; margin: 8px 0;
+            transition: border-color 0.2s;
+        }
+        .source-card:hover { border-left-color: var(--accent); }
+        .source-card .source-title { font-weight: 600; color: var(--text); font-size: 13px; margin-bottom: 4px; }
+        .source-card .source-score { font-size: 11px; color: var(--text-light); font-family: var(--font-code); }
+
+        /* ===== Filter Buttons ===== */
+        .filter-btns .btn {
+            background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border);
+        }
+        .filter-btns .btn:hover { border-color: var(--primary); color: var(--primary-light); }
+        .filter-btns .btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* ===== Status Indicators ===== */
+        .status-dot {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+        }
+        .status-dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+        .status-dot.offline { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+        .status-dot.warning { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+
+        /* ===== Progress Bar ===== */
+        .progress-bar {
+            height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar .fill {
+            height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 3px; transition: width 0.3s ease;
+        }
+
+        /* ===== Tooltip ===== */
+        .tooltip { position: relative; }
+        .tooltip::after {
+            content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%;
+            transform: translateX(-50%); padding: 6px 10px; background: var(--bg-elevated);
+            color: var(--text); font-size: 12px; border-radius: 6px; white-space: nowrap;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+            border: 1px solid var(--border);
+        }
+        .tooltip:hover::after { opacity: 1; }
+
+        /* ===== Card Sections ===== */
+        .card-section { margin-bottom: 24px; }
+        .card-section h3 {
+            font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 12px;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 1200px) {
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+            .bento-grid .span-3 { grid-column: span 2; }
+            .bento-grid .span-4 { grid-column: span 2; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 16px; }
+            .bento-grid { grid-template-columns: 1fr; }
+            .bento-grid .span-2, .bento-grid .span-3, .bento-grid .span-4 { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- Toast -->
+    <div v-if="toast.show" :class="['toast', toast.type]">{{ toast.message }}</div>
+
+    <!-- Login / Register Page -->
+    <div v-if="!token" class="login-container">
+        <div class="login-box">
+            <img src="/小草.jpg" alt="DocSage" style="width:72px;height:72px;border-radius:16px;object-fit:cover;margin:0 auto 16px;display:block;">
+            <h1>DocSage</h1>
+            <p class="subtitle">智能文档管理平台</p>
+
+            <div v-if="authMode === 'login'">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input v-model="loginForm.username" placeholder="请输入用户名" @keyup.enter="login">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input v-model="loginForm.password" type="password" placeholder="请输入密码" @keyup.enter="login">
+                </div>
+                <p v-if="authError" class="error-msg">{{ authError }}</p>
+                <button class="btn btn-primary" style="width:100%;padding:12px" @click="login" :disabled="authLoading">{{ authLoading ? '登录中...' : '登 录' }}</button>
+                <p class="switch-link">还没有账号？<a @click="authMode='register'">立即注册</a></p>
+            </div>
+
+            <div v-else>
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input v-model="registerForm.username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input v-model="registerForm.password" type="password" placeholder="请输入密码">
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input v-model="registerForm.email" placeholder="请输入邮箱">
+                </div>
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input v-model="registerForm.phone" placeholder="请输入手机号">
+                </div>
+                <p v-if="authError" class="error-msg">{{ authError }}</p>
+                <button class="btn btn-primary" style="width:100%;padding:12px" @click="register" :disabled="authLoading">{{ authLoading ? '注册中...' : '注 册' }}</button>
+                <p class="switch-link">已有账号？<a @click="authMode='login'">返回登录</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div v-else class="app-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <img class="logo" src="/小草.jpg" alt="DocSage">
+                DocSage
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">概览</div>
+                <div :class="['nav-item', currentPage==='dashboard' && 'active']" @click="goTo('dashboard')">
+                    <span class="icon">&#9776;</span> 仪表盘
+                </div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">文件与文档</div>
+                <div :class="['nav-item', currentPage==='upload' && 'active']" @click="goTo('upload')">
+                    <span class="icon">&#8679;</span> 文档与文件上传
+                </div>
+                <div :class="['nav-item', currentPage==='documents' && 'active']" @click="goTo('documents')">
+                    <span class="icon">&#128196;</span> 文档列表
+                </div>
+                <div :class="['nav-item', currentPage==='files' && 'active']" @click="goTo('files')">
+                    <span class="icon">&#128193;</span> 文件列表
+                </div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">AI 功能</div>
+                <div :class="['nav-item', currentPage==='rag-manage' && 'active']" @click="goTo('rag-manage')">
+                    <span class="icon">&#128451;</span> 知识库
+                </div>
+                <div :class="['nav-item', currentPage==='ai-chat' && 'active']" @click="goTo('ai-chat')">
+                    <span class="icon">&#128172;</span> PPT 生成
+                </div>
+            </div>
+            <div class="nav-section" v-if="isAdmin">
+                <div class="nav-section-title">运维监控</div>
+                <div :class="['nav-item', currentPage==='aiops' && 'active']" @click="goTo('aiops')">
+                    <span class="icon">&#128200;</span> 系统监控
+                </div>
+            </div>
+            <div class="nav-section" v-if="isAdmin">
+                <div class="nav-section-title">管理</div>
+                <div :class="['nav-item', currentPage==='user-manage' && 'active']" @click="goTo('user-manage')">
+                    <span class="icon">&#128101;</span> 用户管理
+                </div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">系统</div>
+                <div :class="['nav-item', currentPage==='profile' && 'active']" @click="goTo('profile')">
+                    <span class="icon">&#128100;</span> 个人信息
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2>{{ pageTitle }}</h2>
+                <div class="user-info">
+                    <div class="avatar">{{ currentUser.username ? currentUser.username[0].toUpperCase() : 'U' }}</div>
+                    <span>{{ currentUser.username }}</span>
+                    <span class="logout-btn" @click="logout">退出</span>
+                </div>
+            </div>
+
+            <!-- Dashboard (Bento Grid) -->
+            <div v-if="currentPage==='dashboard'">
+                <div class="bento-grid">
+                    <div class="stat-bento blue">
+                        <div class="stat-icon">&#128196;</div>
+                        <div class="stat-label">我的文档</div>
+                        <div class="stat-value">{{ stats.documents }}</div>
+                    </div>
+                    <div class="stat-bento green">
+                        <div class="stat-icon">&#128193;</div>
+                        <div class="stat-label">文件数量</div>
+                        <div class="stat-value">{{ stats.files }}</div>
+                    </div>
+                    <div class="stat-bento orange">
+                        <div class="stat-icon">&#128218;</div>
+                        <div class="stat-label">知识索引</div>
+                        <div class="stat-value">{{ stats.ragDocs }}</div>
+                    </div>
+                    <div class="stat-bento red">
+                        <div class="stat-icon">&#128172;</div>
+                        <div class="stat-label">AI 对话</div>
+                        <div class="stat-value">{{ stats.aiChats }}</div>
+                        <div style="font-size:11px;color:var(--text-light);margin-top:4px">知识库 {{ stats.ragQueries }} · PPT {{ stats.pptChats }}</div>
+                    </div>
+                    <div class="bento-card span-2">
+                        <div class="card-title">快速操作</div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" @click="goTo('upload')">上传文件</button>
+                            <button class="btn btn-success" @click="goTo('ai-chat')">AI 文档生成</button>
+                            <button class="btn btn-warning" @click="goTo('rag-manage')">知识库</button>
+                        </div>
+                    </div>
+                    <div class="bento-card span-2">
+                        <div class="card-title">最近文档</div>
+                        <table class="data-table" v-if="recentDocs.length">
+                            <thead><tr><th>文件名</th><th>类型</th><th>版本</th><th>上传时间</th></tr></thead>
+                            <tbody>
+                                <tr v-for="doc in recentDocs" :key="doc.id">
+                                    <td>{{ doc.title }}</td>
+                                    <td><span class="tag tag-blue">{{ getFileTypeLabel(doc.fileType) }}</span></td>
+                                    <td><span class="tag tag-green">{{ doc.currentVersion }}</span></td>
+                                    <td>{{ formatTime(doc.updateTime) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-else class="empty-state"><p>暂无文档</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div v-if="currentPage==='files'">
+                <div class="bento-grid">
+                    <div class="bento-card span-4">
+                        <div class="search-bar">
+                            <input v-model="fileSearchKeyword" placeholder="搜索文件..." @keyup.enter="searchFiles">
+                            <button class="btn btn-primary" @click="searchFiles">搜索</button>
+                            <button class="btn btn-secondary" @click="resetFileType">刷新</button>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" class="filter-btns">
+                            <button :class="['btn', fileTypeFilter==='' ? 'btn-primary' : 'btn-secondary']" @click="filterByType('')">全部</button>
+                            <button :class="['btn', fileTypeFilter==='image' ? 'btn-primary' : 'btn-secondary']" @click="filterByType('image')">图片</button>
+                            <button :class="['btn', fileTypeFilter==='compressed' ? 'btn-primary' : 'btn-secondary']" @click="filterByType('compressed')">压缩包</button>
+                        </div>
+                        <div v-if="isAdmin" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+                            <label style="font-size:13px;color:var(--text-muted)">按用户筛选：</label>
+                            <select v-model="fileOwnerFilterUserId" @change="searchFiles" style="padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text);min-width:180px">
+                                <option value="">全部用户</option>
+                                <option v-for="u in userList" :key="u.id" :value="String(u.id)">{{ u.username }}（ID: {{ u.id }}）</option>
+                            </select>
+                            <input v-model="fileOwnerFilterUserId" type="number" min="1" placeholder="用户ID" @keyup.enter="searchFiles" style="width:100px;padding:6px 8px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text)">
+                            <button class="btn btn-secondary btn-sm" @click="searchFiles">筛选</button>
+                            <button class="btn btn-secondary btn-sm" @click="fileOwnerFilterUserId='';searchFiles()">清除</button>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr><th>文件名</th><th>类型</th><th>大小</th><th v-if="isAdmin">用户ID</th><th v-if="isAdmin">上传者</th><th>上传时间</th><th>操作</th></tr></thead>
+                            <tbody>
+                                <tr v-for="f in fileList" :key="f.fileId">
+                                    <td><div class="file-info"><div class="file-icon">&#128196;</div><span>{{ f.fileName }}</span></div></td>
+                                    <td>{{ f.fileType || '-' }}</td>
+                                    <td>{{ formatSize(f.fileSize) }}</td>
+                                    <td v-if="isAdmin"><span class="tag tag-blue">{{ resolveUserIdByName(f.createBy) }}</span></td>
+                                    <td v-if="isAdmin">{{ f.createBy || '-' }}</td>
+                                    <td>{{ formatTime(f.createTime) }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-primary" @click="downloadFile(f.fileId, f.fileName)">下载</button>
+                                            <button class="btn btn-sm btn-secondary" @click="previewFile(f)">预览</button>
+                                            <button class="btn btn-sm btn-secondary" @click="showRenameModal(f)">重命名</button>
+                                            <button class="btn btn-sm btn-danger" @click="deleteFile(f.fileId)">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!fileList.length" class="empty-state"><p>暂无文件</p></div>
+                        <div class="pagination" v-if="fileTotalPages > 1">
+                            <button :disabled="filePage<=1" @click="filePage--;loadFiles()">上一页</button>
+                            <button v-for="p in Math.min(fileTotalPages,5)" :key="p" :class="{active:filePage===p}" @click="filePage=p;loadFiles()">{{p}}</button>
+                            <button :disabled="filePage>=fileTotalPages" @click="filePage++;loadFiles()">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload -->
+            <div v-if="currentPage==='upload'">
+                <div class="bento-grid">
+                    <div class="bento-card span-4">
+                        <div class="card-title">文档与文件上传</div>
+                        <div class="upload-zone" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent="handleDrop">
+                            <div class="icon">&#8679;</div>
+                            <p>点击或拖拽文件到此处上传</p>
+                            <p style="font-size:12px;color:var(--text-light);margin-top:8px">文档：PDF、Word、PPT、CSV、HTML ｜ 文件：图片、压缩包</p>
+                            <p style="font-size:12px;color:var(--text-light)">系统将自动识别类型并分类存储</p>
+                            <input type="file" ref="fileInput" @change="handleFileSelect" accept=".pdf,.doc,.docx,.ppt,.pptx,.csv,.md,.html,.htm,image/*,.zip,.rar,.7z,.tar,.gz" multiple>
+                        </div>
+                        <div v-if="uploadFiles.length" style="margin-top:20px">
+                            <div style="margin-bottom:10px;color:var(--text-muted);font-size:13px;font-weight:500">已选择 {{ uploadFiles.length }} 个文件</div>
+                            <div v-for="(f, i) in uploadFiles" :key="i" class="file-list-item">
+                                <div class="file-info">
+                                    <div class="file-icon">&#128196;</div>
+                                    <span>{{ f.name }} ({{ formatSize(f.size) }})</span>
+                                    <span :class="f.isDoc ? 'tag tag-blue' : 'tag tag-green'" style="margin-left:8px">{{ f.isDoc ? '文档' : '文件' }}</span>
+                                </div>
+                                <span :class="f.status==='done'?'tag tag-green':f.status==='error'?'tag tag-red':'tag tag-gray'">
+                                    {{ f.status==='done'?'已上传':f.status==='error'?'失败':'待上传' }}
+                                </span>
+                            </div>
+                            <div v-if="uploadFiles.some(f=>f.isDoc)" style="margin-top:10px">
+                                <label>文档版本号：</label>
+                                <input v-model="globalDocVersion" placeholder="例如：1.0.0" style="width:120px;padding:6px">
+                            </div>
+                            <div style="margin-top:14px;display:flex;gap:8px">
+                                <button class="btn btn-primary" @click="uploadAllFiles" :disabled="uploading">{{ uploading ? '上传中...' : '开始上传' }}</button>
+                                <button class="btn btn-secondary" @click="uploadFiles=[]">清空列表</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents List -->
+            <div v-if="currentPage==='documents'">
+                <div class="bento-grid">
+                    <div class="bento-card span-4">
+                        <div class="search-bar">
+                            <input v-model="docSearchKeyword" placeholder="搜索文档..." @keyup.enter="searchDocFiles">
+                            <button class="btn btn-primary" @click="searchDocFiles">搜索</button>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                            <button :class="['btn', docTypeFilter==='' ? 'btn-primary' : 'btn-secondary']" @click="filterDocByType('')">全部</button>
+                            <button :class="['btn', docTypeFilter==='pdf' ? 'btn-primary' : 'btn-secondary']" @click="filterDocByType('pdf')">PDF</button>
+                            <button :class="['btn', docTypeFilter==='word' ? 'btn-primary' : 'btn-secondary']" @click="filterDocByType('word')">Word</button>
+                            <button :class="['btn', docTypeFilter==='ppt' ? 'btn-primary' : 'btn-secondary']" @click="filterDocByType('ppt')">PPT</button>
+                            <button :class="['btn', docTypeFilter==='csv' ? 'btn-primary' : 'btn-secondary']" @click="filterDocByType('csv')">CSV</button>
+                            <button :class="['btn', docTypeFilter==='md' ? 'btn-primary' : 'btn-secondary']" @click="filterDocByType('md')">Markdown</button>
+                            <button :class="['btn', docTypeFilter==='html' ? 'btn-primary' : 'btn-secondary']" @click="filterDocByType('html')">HTML</button>
+                        </div>
+                        <div v-if="isAdmin" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+                            <label style="font-size:13px;color:var(--text-muted)">按用户筛选：</label>
+                            <select v-model="docOwnerFilterUserId" @change="searchDocFiles" style="padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text);min-width:180px">
+                                <option value="">全部用户</option>
+                                <option v-for="u in userList" :key="u.id" :value="String(u.id)">{{ u.username }}（ID: {{ u.id }}）</option>
+                            </select>
+                            <input v-model="docOwnerFilterUserId" type="number" min="1" placeholder="用户ID" @keyup.enter="searchDocFiles" style="width:100px;padding:6px 8px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text)">
+                            <button class="btn btn-secondary btn-sm" @click="searchDocFiles">筛选</button>
+                            <button class="btn btn-secondary btn-sm" @click="docOwnerFilterUserId='';searchDocFiles()">清除</button>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr><th>文件名</th><th>类型</th><th>当前版本</th><th>分支</th><th v-if="isAdmin">用户ID</th><th>上传者</th><th>上传时间</th><th>操作</th></tr></thead>
+                            <tbody>
+                                <tr v-for="doc in docList" :key="doc.id">
+                                    <td>{{ doc.title }}</td>
+                                    <td><span class="tag tag-blue">{{ getFileTypeLabel(doc.fileType) }}</span></td>
+                                    <td><span class="tag tag-green">{{ doc.currentVersion }}</span></td>
+                                    <td>
+                                        <span class="tag tag-blue" style="cursor:pointer" @click="showBranches(doc)">{{ doc.branchName || 'main' }}</span>
+                                        <span v-if="doc.branchName && doc.branchName !== 'main'" class="tag tag-green" style="margin-left:4px">查看中</span>
+                                    </td>
+                                    <td v-if="isAdmin"><span class="tag tag-blue">{{ doc.userId ?? '-' }}</span></td>
+                                    <td>{{ doc.createBy }}</td>
+                                    <td>{{ formatTime(doc.updateTime) }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-primary" @click="downloadDocFile(doc.currentFileId, doc.title)">下载</button>
+                                            <button class="btn btn-sm btn-secondary" @click="previewDoc(doc)">预览</button>
+                                            <button class="btn btn-sm btn-warning" @click="showNewVersionModal(doc)">上传新版本</button>
+                                            <button class="btn btn-sm btn-secondary" @click="showDocVersions(doc)">版本历史</button>
+                                            <button class="btn btn-sm btn-secondary" @click="showBranches(doc)">分支</button>
+                                            <button class="btn btn-sm btn-danger" @click="deleteDocFile(doc)">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!docList.length" class="empty-state"><p>暂无文档</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Chat + File Generation -->
+            <div v-if="currentPage==='ai-chat'">
+                <div class="bento-grid">
+                    <div class="bento-card span-4">
+                        <div class="card-title">相关参考文档</div>
+                        <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">
+                            <strong>主文档</strong>：内容精炼、相关性高，全文注入参考资料；超过约 1.2 万字将自动降为次文档。
+                            <strong>次文档</strong>：篇幅较大或相关性一般，生成时通过知识库检索补充。
+                            可只添加主文档、只添加次文档、两者都有或都不添加。
+                        </p>
+                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+                            <label style="font-size:13px;color:var(--text-muted)">默认角色：</label>
+                            <select v-model="pptRefPreferredRole" style="padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text)">
+                                <option value="auto">自动判定</option>
+                                <option value="primary">主文档</option>
+                                <option value="secondary">次文档</option>
+                            </select>
+                            <span v-if="pptConversationId" style="font-size:11px;color:var(--text-light)">会话 ID: {{ pptConversationId.slice(0,8) }}…</span>
+                        </div>
+                        <div class="upload-zone" style="padding:24px" @click="$refs.pptRefFileInput.click()" @dragover.prevent @drop.prevent="handlePptRefDrop">
+                            <div class="icon">&#8679;</div>
+                            <p>点击或拖拽上传本地参考文档</p>
+                            <p style="font-size:12px;color:var(--text-light);margin-top:8px">支持 PDF、Word、PPT、Excel、Markdown、TXT 等</p>
+                            <input type="file" ref="pptRefFileInput" @change="handlePptRefFileSelect" accept=".md,.doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx,.csv,.html,.htm,.txt" multiple>
+                        </div>
+                        <div style="margin-top:16px">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+                                <span style="font-size:13px;font-weight:500;color:var(--text-muted)">从文档库添加</span>
+                                <button class="btn btn-secondary btn-sm" @click="loadPptLibraryCandidates" :disabled="pptLibraryLoading">{{ pptLibraryLoading ? '加载中...' : '刷新文档库' }}</button>
+                            </div>
+                            <div v-if="pptLibraryCandidates.length" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                                <table class="data-table">
+                                    <thead style="position:sticky;top:0;z-index:1">
+                                        <tr><th>文档名</th><th>类型</th><th>操作</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="doc in pptLibraryCandidates" :key="doc.sourceDocumentId">
+                                            <td>{{ doc.title }}</td>
+                                            <td><span class="tag tag-blue">{{ doc.fileType || '-' }}</span></td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm" @click="attachPptRefFromLibrary(doc)" :disabled="pptRefUploading">添加</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div v-else class="empty-state" style="padding:16px"><p>{{ pptLibraryLoading ? '加载中...' : '点击刷新文档库以选择文档' }}</p></div>
+                        </div>
+                        <div v-if="pptRefs.length" style="margin-top:16px">
+                            <div style="font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:8px">已添加 {{ pptRefs.length }} 个参考文档</div>
+                            <div v-for="ref in pptRefs" :key="ref.refId" class="file-list-item">
+                                <div class="file-info" style="flex:1">
+                                    <div style="font-weight:500">{{ ref.fileName }}</div>
+                                    <div style="font-size:12px;color:var(--text-light);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                                        <span v-if="ref.role==='PRIMARY'" class="tag tag-green">主文档</span>
+                                        <span v-else class="tag tag-blue">次文档</span>
+                                        <span class="tag tag-gray">{{ ref.sourceType==='library' ? '文档库' : '本地上传' }}</span>
+                                        <span>{{ ref.contentLength }} 字</span>
+                                        <span v-if="ref.autoDowngraded" class="tag tag-orange">超长已降级</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger btn-sm" @click="removePptRef(ref.refId)" :disabled="pptRefUploading">移除</button>
+                            </div>
+                        </div>
+                        <div v-if="pptRefUploading" style="margin-top:12px;display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:13px">
+                            <div class="spinner" style="width:16px;height:16px"></div> 正在处理文档…
+                        </div>
+                    </div>
+                </div>
+                <div class="bento-grid" style="margin-top:16px">
+                    <div class="bento-card span-4">
+                        <div class="chat-container">
+                            <div class="chat-messages" ref="aiChatMessages">
+                                <div v-for="(msg, i) in aiChatHistory" :key="i" :class="['chat-msg', msg.role]">
+                                    <div class="bubble" style="white-space:pre-wrap">{{ msg.content }}</div>
+                                </div>
+                                <div v-if="aiChatLoading" class="chat-msg assistant"><div class="bubble"><div class="spinner"></div></div></div>
+                            </div>
+                            <div :class="['drag-handle', chatDragActive && 'dragging']" @mousedown.prevent="startChatDrag"></div>
+                            <div v-if="pptRefinable" style="padding:8px 12px;background:var(--primary-glow);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+                                <span style="font-size:12px;color:var(--text-muted)">优化结果保存为草稿，需手动应用；不满意可回退历史版本</span>
+                                <button class="btn btn-secondary btn-sm" @click="startNewPptSession" :disabled="aiChatLoading">开始新PPT</button>
+                            </div>
+                            <div class="chat-input">
+                                <textarea v-model="aiChatInput" :placeholder="pptChatPlaceholder" @keydown.enter.prevent="sendAiChat" :disabled="aiChatLoading"></textarea>
+                                <button class="btn-send" @click="sendAiChat" :disabled="aiChatLoading">&#9654;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="pptRefinable && pptLastFileId" class="bento-grid" style="margin-top:16px">
+                    <div class="bento-card span-4">
+                        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+                            <span>PPT 版本管理</span>
+                            <button class="btn btn-secondary btn-sm" @click="loadPptVersions" :disabled="pptVersionLoading">刷新</button>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">
+                            预览/下载默认使用<strong>当前已应用</strong>版本；优化稿为草稿，点击「应用」后才会成为正式版本。
+                        </p>
+                        <div v-if="pptDraftVersionId" style="margin-bottom:12px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--warning-bg);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                            <span style="font-size:13px;color:var(--accent)">有待应用的优化草稿</span>
+                            <button class="btn btn-primary btn-sm" @click="previewPptVersion(pptDraftVersionId)">预览草稿</button>
+                            <button class="btn btn-success btn-sm" @click="applyPptVersion(pptDraftVersionId)">应用此版本</button>
+                            <button class="btn btn-secondary btn-sm" @click="discardPptDraft">丢弃草稿</button>
+                        </div>
+                        <table class="data-table" v-if="pptVersions.length">
+                            <thead>
+                                <tr>
+                                    <th>版本</th>
+                                    <th>状态</th>
+                                    <th>页数</th>
+                                    <th>说明</th>
+                                    <th>时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="v in pptVersions" :key="v.id">
+                                    <td>v{{ v.versionNumber }}</td>
+                                    <td>
+                                        <span v-if="v.id===pptCurrentVersionId" class="tag tag-green">当前</span>
+                                        <span v-else-if="v.status==='draft'" class="tag tag-orange">草稿</span>
+                                        <span v-else class="tag tag-gray">历史</span>
+                                    </td>
+                                    <td>{{ v.sectionCount || '-' }}</td>
+                                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" :title="v.changeLog">{{ v.changeLog || '-' }}</td>
+                                    <td>{{ v.createTime ? formatTime(v.createTime) : '-' }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-secondary" @click="previewPptVersion(v.id)">预览</button>
+                                            <button v-if="v.status!=='draft'" class="btn btn-sm btn-primary" @click="savePptToLibrary(pptLastFileId, v.id)">存入文档库</button>
+                                            <button v-if="v.status==='draft'" class="btn btn-sm btn-success" @click="applyPptVersion(v.id)">应用</button>
+                                            <button v-else-if="v.id!==pptCurrentVersionId" class="btn btn-sm btn-warning" @click="rollbackPptVersion(v.id)">回退</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-else class="empty-state" style="padding:16px"><p>{{ pptVersionLoading ? '加载中...' : '暂无版本记录' }}</p></div>
+                    </div>
+                </div>
+                <div class="bento-grid" style="margin-top:16px">
+                    <div class="bento-card span-4">
+                        <div class="card-title">最近生成文件</div>
+                        <table class="data-table" v-if="aiGeneratedFiles.length">
+                            <thead><tr><th>文件名</th><th>格式</th><th>创建者</th><th>时间</th><th>操作</th></tr></thead>
+                            <tbody>
+                                <tr v-for="f in aiGeneratedFiles" :key="f.id">
+                                    <td>{{ f.title }}</td>
+                                    <td><span class="tag tag-blue">{{ f.fileFormat }}</span></td>
+                                    <td>{{ f.createBy }}</td>
+                                    <td>{{ formatTime(f.createTime) }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-primary" @click="downloadGeneratedFile(f.id, f.title)">下载</button>
+                                            <button v-if="f.fileFormat==='pdf' || f.fileFormat==='ppt'" class="btn btn-sm btn-secondary" @click="previewGeneratedFile(f.id, f.fileFormat)">预览</button>
+                                            <button v-if="f.fileFormat==='ppt'" class="btn btn-sm btn-success" @click="savePptToLibrary(f.id)">存入文档库</button>
+                                            <button class="btn btn-sm btn-danger" @click="deleteGeneratedFile(f.id)">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!aiGeneratedFiles.length" class="empty-state"><p>暂无生成文件</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAG 知识库（管理 + 问答） -->
+            <div v-if="currentPage==='rag-manage'">
+                <div class="bento-grid">
+                    <div class="bento-card span-2">
+                        <div class="card-title">上传文档到知识库</div>
+                        <div class="upload-zone" @click="$refs.ragFileInput.click()" @dragover.prevent @drop.prevent="handleRagDrop">
+                            <div class="icon">&#8679;</div>
+                            <p>点击或拖拽文件到此处</p>
+                            <p style="font-size:12px;color:var(--text-light);margin-top:8px">支持常见文档格式：PDF、Word、PPT、Excel、CSV、HTML、Markdown、TXT 等</p>
+                            <input type="file" ref="ragFileInput" @change="handleRagFileSelect" accept=".md,.doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx,.csv,.html,.htm,.txt,.rtf,.odt,.ods,.odp" multiple>
+                        </div>
+                        <div v-if="ragManageFiles.length" style="margin-top:16px">
+                            <div style="margin-bottom:8px;color:var(--text-muted);font-size:13px;font-weight:500">已选择 {{ ragManageFiles.length }} 个文件</div>
+                            <div v-for="(f, i) in ragManageFiles" :key="i" class="file-list-item">
+                                <div class="file-info">
+                                    <div class="file-icon">&#128196;</div>
+                                    <span>{{ f.name }} ({{ formatSize(f.size) }})</span>
+                                </div>
+                                <span :class="f.status==='done'?'tag tag-green':f.status==='error'?'tag tag-red':'tag tag-gray'">
+                                    {{ f.status==='done'?'已索引':f.status==='error'?'失败':f.status==='uploading'?'处理中...':'待上传' }}
+                                </span>
+                            </div>
+                            <div style="margin-top:12px;display:flex;gap:8px">
+                                <button class="btn btn-primary" @click="uploadRagFiles" :disabled="ragUploading">{{ ragUploading ? '上传中...' : '开始上传' }}</button>
+                                <button class="btn btn-secondary" @click="ragManageFiles=[]">清空列表</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bento-card span-2">
+                        <div class="card-title">已索引文档</div>
+                        <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+                            <span style="color:var(--text-muted);font-size:12px">共 {{ ragDocList.length }} 个文档</span>
+                            <button class="btn btn-secondary btn-sm" @click="loadRagDocuments">刷新</button>
+                        </div>
+                        <div v-if="ragDocList.length" style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                            <table class="data-table">
+                                <thead style="position:sticky;top:0;z-index:1"><tr><th>文件名</th><th>来源</th><th>类型</th><th>状态</th><th>索引时间</th><th>操作</th></tr></thead>
+                                <tbody>
+                                    <tr v-for="doc in ragDocListPaginated" :key="doc.documentId">
+                                        <td>
+                                            <div>{{ doc.fileName || doc.documentId }}</div>
+                                            <div v-if="doc.syncHint" style="font-size:11px;color:var(--accent);margin-top:2px">{{ doc.syncHint }}</div>
+                                        </td>
+                                        <td><span class="tag" :class="doc.sourceType==='library'?'tag-blue':'tag-gray'">{{ doc.sourceType==='library'?'文档库':'本地上传' }}</span></td>
+                                        <td><span class="tag tag-blue">{{ doc.fileType || '-' }}</span></td>
+                                        <td>
+                                            <span v-if="doc.syncStatus==='OUTDATED' || doc.syncStatus==='BROKEN'" class="tag tag-orange">需重新索引</span>
+                                            <span v-else class="tag tag-green">已索引</span>
+                                        </td>
+                                        <td>{{ doc.uploadTime ? formatTime(Number(doc.uploadTime)) : '-' }}</td>
+                                        <td style="display:flex;gap:6px;flex-wrap:wrap">
+                                            <button v-if="doc.sourceDocumentId && (doc.syncStatus==='OUTDATED' || doc.syncStatus==='BROKEN')" class="btn btn-secondary btn-sm" @click="reindexRagFromLibrary(doc)">重新索引</button>
+                                            <button class="btn btn-danger btn-sm" @click="deleteRagDocument(doc.documentId)">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-if="ragDocList.length > ragDocPageSize" class="pagination" style="margin-top:8px">
+                            <button @click="ragDocPage--" :disabled="ragDocPage<=1">&lt;</button>
+                            <button v-for="p in ragDocTotalPages" :key="p" :class="{active: p===ragDocPage}" @click="ragDocPage=p">{{ p }}</button>
+                            <button @click="ragDocPage++" :disabled="ragDocPage>=ragDocTotalPages">&gt;</button>
+                        </div>
+                        <div v-if="!ragDocList.length" class="empty-state"><p>暂无已索引文档</p></div>
+                    </div>
+                </div>
+                <div class="bento-grid" style="margin-top:16px">
+                    <div class="bento-card span-4">
+                        <div class="card-title">从文档库导入</div>
+                        <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">从文档管理中选择已有文档建立知识库索引。已索引文档可重新索引；文档库更新后会提示需重新索引。</p>
+                        <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+                            <span style="color:var(--text-muted);font-size:12px">可选 {{ ragImportCandidates.length }} 个文档</span>
+                            <div style="display:flex;gap:8px">
+                                <button class="btn btn-secondary btn-sm" @click="loadRagImportCandidates" :disabled="ragImportLoading">{{ ragImportLoading ? '加载中...' : '刷新列表' }}</button>
+                                <button class="btn btn-primary btn-sm" @click="batchImportFromLibrary(false)" :disabled="!ragImportSelected.length || ragImportLoading">导入选中 ({{ ragImportSelected.length }})</button>
+                            </div>
+                        </div>
+                        <div v-if="ragImportCandidates.length" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                            <table class="data-table">
+                                <thead style="position:sticky;top:0;z-index:1">
+                                    <tr>
+                                        <th style="width:36px"><input type="checkbox" :checked="ragImportSelected.length===ragImportCandidates.filter(c=>c.syncStatus!=='INDEXED').length && ragImportCandidates.some(c=>c.syncStatus!=='INDEXED')" @change="toggleAllRagImport($event)"></th>
+                                        <th>文档名</th>
+                                        <th>类型</th>
+                                        <th>版本</th>
+                                        <th>索引状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="doc in ragImportCandidates" :key="doc.sourceDocumentId">
+                                        <td><input type="checkbox" :value="doc.sourceDocumentId" v-model="ragImportSelected" :disabled="doc.syncStatus==='INDEXED'"></td>
+                                        <td>
+                                            <div>{{ doc.title }}</div>
+                                            <div v-if="doc.syncStatus==='OUTDATED'" style="font-size:11px;color:var(--accent);margin-top:2px">「{{ doc.title }}」已更新，需重新索引</div>
+                                        </td>
+                                        <td><span class="tag tag-blue">{{ doc.fileType || '-' }}</span></td>
+                                        <td>{{ doc.currentVersion || '-' }}</td>
+                                        <td>
+                                            <span v-if="doc.syncStatus==='INDEXED'" class="tag tag-green">已索引</span>
+                                            <span v-else-if="doc.syncStatus==='OUTDATED'" class="tag tag-orange">需重新索引</span>
+                                            <span v-else class="tag tag-gray">未索引</span>
+                                        </td>
+                                        <td>
+                                            <button v-if="doc.syncStatus==='NOT_INDEXED'" class="btn btn-primary btn-sm" @click="importFromLibrary(doc, false)" :disabled="ragImportLoading">导入</button>
+                                            <button v-else class="btn btn-secondary btn-sm" @click="importFromLibrary(doc, true)" :disabled="ragImportLoading">重新索引</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-else class="empty-state"><p>{{ ragImportLoading ? '加载中...' : '暂无可导入文档（仅显示您有权限的文档）' }}</p></div>
+                    </div>
+                </div>
+                <div class="bento-grid" style="margin-top:16px">
+                    <div class="bento-card span-4">
+                        <div class="card-title">知识库问答</div>
+                        <div class="chat-container">
+                            <div class="chat-messages" ref="ragMessages">
+                                <div v-for="(msg, i) in ragHistory" :key="i" :class="['chat-msg', msg.role]">
+                                    <div class="bubble" style="white-space:pre-wrap">
+                                        <div v-if="msg.sources && msg.sources.length" style="color:var(--primary-light);font-size:12px;margin-bottom:6px;">
+                                            根据以下文件回答：{{ msg.sources.map(s => s.fileName || s.id).join('、') }}
+                                        </div>
+                                        {{ msg.content }}
+                                    </div>
+                                </div>
+                                <div v-if="ragLoading" class="chat-msg assistant">
+                                    <div class="typing-indicator">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div :class="['drag-handle', chatDragActive && 'dragging']" @mousedown.prevent="startChatDrag"></div>
+                            <div class="chat-input">
+                                <textarea v-model="ragQuery" placeholder="输入问题，基于知识库回答... (Enter发送, Ctrl+Enter换行)" @keydown.enter.prevent="doRagQuery"></textarea>
+                                <button class="btn-send" @click="doRagQuery" :disabled="ragLoading">&#9654;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AIOps Monitor (Bento Grid) -->
+            <div v-if="currentPage==='aiops'">
+                <div class="bento-grid">
+                    <div class="stat-bento blue">
+                        <div class="stat-icon">&#128218;</div>
+                        <div class="stat-label">RAG 切片数</div>
+                        <div class="stat-value">{{ aiopsMetrics.ragSliceCount || 0 }}</div>
+                    </div>
+                    <div class="stat-bento green">
+                        <div class="stat-icon">&#128196;</div>
+                        <div class="stat-label">PPT 生成数</div>
+                        <div class="stat-value">{{ aiopsMetrics.pptCount || 0 }}</div>
+                    </div>
+                    <div class="stat-bento orange">
+                        <div class="stat-icon">&#8679;</div>
+                        <div class="stat-label">总 Input Tokens</div>
+                        <div class="stat-value">{{ (aiopsMetrics.totalTokensInput || 0).toLocaleString() }}</div>
+                    </div>
+                    <div class="stat-bento red">
+                        <div class="stat-icon">&#8681;</div>
+                        <div class="stat-label">总 Output Tokens</div>
+                        <div class="stat-value">{{ (aiopsMetrics.totalTokensOutput || 0).toLocaleString() }}</div>
+                    </div>
+                    <div class="bento-card span-2">
+                        <div class="card-title">Token 用量明细</div>
+                        <table class="data-table">
+                            <thead><tr><th>功能</th><th>Input Tokens</th><th>Output Tokens</th><th>其他</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td>RAG 知识库</td>
+                                    <td>{{ (aiopsMetrics.ragTokensInput || 0).toLocaleString() }}</td>
+                                    <td>{{ (aiopsMetrics.ragTokensOutput || 0).toLocaleString() }}</td>
+                                    <td>{{ aiopsMetrics.ragDocCount || 0 }} 篇文档 · {{ aiopsMetrics.ragSliceCount || 0 }} 个切片</td>
+                                </tr>
+                                <tr>
+                                    <td>PPT 生成</td>
+                                    <td>{{ (aiopsMetrics.pptTokensInput || 0).toLocaleString() }}</td>
+                                    <td>{{ (aiopsMetrics.pptTokensOutput || 0).toLocaleString() }}</td>
+                                    <td>{{ aiopsMetrics.pptCount || 0 }} 个 PPT</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bento-card span-2">
+                        <div class="card-title">每日 Token 用量趋势（近 7 天）</div>
+                        <div style="position:relative;height:260px">
+                            <canvas id="tokenChart"></canvas>
+                        </div>
+                        <div v-if="!dailyTrends.length" class="empty-state"><p>暂无历史数据，使用后次日自动生成</p></div>
+                    </div>
+                    <div class="bento-card span-2 accent-left">
+                        <div class="card-title">AI 智能分析</div>
+                        <div v-if="aiAnalysis" style="line-height:1.8;font-size:14px;color:var(--text);white-space:pre-wrap">{{ aiAnalysis }}</div>
+                        <div v-else class="empty-state" style="padding:24px"><p>点击下方按钮，AI 将分析当前系统使用情况</p></div>
+                        <div class="modal-actions" style="margin-top:12px">
+                            <button class="btn btn-primary" @click="runAiAnalysis" :disabled="aiAnalysisLoading">{{ aiAnalysisLoading ? '分析中...' : 'AI 分析' }}</button>
+                            <button class="btn btn-secondary" @click="loadAIOpsMetrics">刷新数据</button>
+                            <button class="btn btn-warning" @click="resetMetrics">重置</button>
+                        </div>
+                    </div>
+                    <div class="bento-card span-2 accent-top">
+                        <div class="card-title">后台报警记录</div>
+                        <div v-if="alertRecords.length" style="max-height:300px;overflow-y:auto">
+                            <table class="data-table">
+                                <thead><tr><th>时间</th><th>错误来源</th><th>错误信息</th><th>次数</th><th>AI 分析</th></tr></thead>
+                                <tbody>
+                                    <tr v-for="alert in alertRecords" :key="alert.id">
+                                        <td style="white-space:nowrap;font-size:12px">{{ alert.createTime }}</td>
+                                        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" :title="alert.source">{{ alert.source }}</td>
+                                        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" :title="alert.errorMessage">{{ alert.errorMessage }}</td>
+                                        <td><span class="tag tag-red">{{ alert.errorCount || 1 }}</span></td>
+                                        <td style="max-width:250px;line-height:1.5;font-size:12px;color:var(--text-muted);white-space:pre-wrap">{{ alert.aiAnalysis }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-else class="empty-state" style="padding:24px"><p>暂无报警记录</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile -->
+            <div v-if="currentPage==='profile'">
+                <div class="bento-grid">
+                    <div class="bento-card span-2">
+                        <div class="card-title">个人信息</div>
+                        <table class="data-table">
+                            <tr><td style="width:120px;font-weight:600">用户ID</td><td>{{ currentUser.id }}</td></tr>
+                            <tr><td style="font-weight:600">用户名</td><td>{{ currentUser.username }}</td></tr>
+                            <tr><td style="font-weight:600">邮箱</td><td>{{ currentUser.email || '-' }}</td></tr>
+                            <tr><td style="font-weight:600">手机号</td><td>{{ currentUser.phone || '-' }}</td></tr>
+                            <tr><td style="font-weight:600">角色</td><td><span class="tag tag-blue">{{ currentUser.role }}</span></td></tr>
+                            <tr><td style="font-weight:600">状态</td><td><span :class="'tag '+(currentUser.status===1?'tag-green':'tag-red')">{{ currentUser.status===1?'启用':'禁用' }}</span></td></tr>
+                        </table>
+                        <div style="margin-top:20px">
+                            <button class="btn btn-primary" @click="openChangePasswordModal">修改密码</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Manage (Admin) -->
+            <div v-if="currentPage==='user-manage'">
+                <div class="bento-grid">
+                    <div class="bento-card span-4">
+                        <div class="card-title">用户管理</div>
+                        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">查看全部用户，重置密码或启用/禁用账号。</p>
+                        <table class="data-table">
+                            <thead><tr><th>ID</th><th>用户名</th><th>邮箱</th><th>手机号</th><th>角色</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead>
+                            <tbody>
+                                <tr v-for="u in manageUserList" :key="u.id">
+                                    <td>{{ u.id }}</td>
+                                    <td>{{ u.username }}</td>
+                                    <td>{{ u.email || '-' }}</td>
+                                    <td>{{ u.phone || '-' }}</td>
+                                    <td><span class="tag tag-blue">{{ u.role }}</span></td>
+                                    <td><span :class="'tag '+(u.status===1?'tag-green':'tag-red')">{{ u.status===1?'启用':'禁用' }}</span></td>
+                                    <td>{{ formatTime(u.createTime) }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-warning" @click="openResetPasswordModal(u)">重置密码</button>
+                                            <button v-if="u.id !== currentUser.id && u.status===1" class="btn btn-sm btn-danger" @click="toggleUserStatus(u, 0)">禁用</button>
+                                            <button v-else-if="u.id !== currentUser.id && u.status!==1" class="btn btn-sm btn-success" @click="toggleUserStatus(u, 1)">启用</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!manageUserList.length" class="empty-state"><p>暂无用户</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version History Modal -->
+            <div v-if="showModal==='versions'" class="modal-overlay" @click.self="showModal=null">
+                <div class="modal">
+                    <h3>版本历史 - {{ versionDocTitle }}</h3>
+                    <ul class="version-list" v-if="versionList.length">
+                        <li v-for="v in versionList" :key="v.id">
+                            <div>
+                                <strong>{{ v.version }}</strong>
+                                <span style="margin-left:8px;color:var(--text-muted)">{{ v.uploadedBy }}</span>
+                                <span style="margin-left:8px;color:var(--text-light)">{{ formatTime(v.uploadTime) }}</span>
+                                <div v-if="v.changeLog" style="color:var(--text-muted);font-size:13px;margin-top:2px">{{ v.changeLog }}</div>
+                            </div>
+                            <button class="btn btn-sm btn-success" @click="restoreDocVersion(versionDocId, v.id)">恢复</button>
+                        </li>
+                    </ul>
+                    <div v-else class="empty-state"><p>暂无版本记录</p></div>
+                    <div class="modal-actions"><button class="btn btn-secondary" @click="showModal=null">关闭</button></div>
+                </div>
+            </div>
+
+            <!-- Change Password Modal -->
+            <div v-if="showModal==='changePassword'" class="modal-overlay" @click.self="showModal=null">
+                <div class="modal">
+                    <h3>修改密码</h3>
+                    <div class="form-group">
+                        <label>原密码</label>
+                        <input type="password" v-model="passwordForm.oldPassword" placeholder="请输入原密码" @keyup.enter="changeMyPassword">
+                    </div>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <input type="password" v-model="passwordForm.newPassword" placeholder="至少6位">
+                    </div>
+                    <div class="form-group">
+                        <label>确认新密码</label>
+                        <input type="password" v-model="passwordForm.confirmPassword" placeholder="再次输入新密码" @keyup.enter="changeMyPassword">
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" @click="changeMyPassword" :disabled="passwordLoading">{{ passwordLoading ? '提交中...' : '确认修改' }}</button>
+                        <button class="btn btn-secondary" @click="showModal=null">取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Reset Password Modal -->
+            <div v-if="showModal==='resetPassword'" class="modal-overlay" @click.self="showModal=null">
+                <div class="modal">
+                    <h3>重置密码 - {{ resetPasswordUsername }}</h3>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <input type="password" v-model="resetPasswordNew" placeholder="至少6位">
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" @click="submitAdminResetPassword" :disabled="passwordLoading">确认重置</button>
+                        <button class="btn btn-secondary" @click="showModal=null">取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload New Version Modal -->
+            <div v-if="showModal==='newVersion'" class="modal-overlay" @click.self="showModal=null">
+                <div class="modal">
+                    <h3>上传新版本 - {{ newVersionDocTitle }}</h3>
+                    <div class="form-group">
+                        <label>选择文件</label>
+                        <input type="file" @change="onNewVersionFileSelect" style="padding:8px">
+                    </div>
+                    <div class="form-group">
+                        <label>版本号（如 1.1.0）</label>
+                        <input v-model="newVersionNumber" placeholder="例如：1.1.0">
+                    </div>
+                    <div class="form-group">
+                        <label>更新备注</label>
+                        <input v-model="newVersionChangeLog" placeholder="本次更新说明">
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" @click="uploadNewVersion">上传</button>
+                        <button class="btn btn-secondary" @click="showModal=null">取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Branch List Modal -->
+            <div v-if="showModal==='branches'" class="modal-overlay" @click.self="showModal=null">
+                <div class="modal" style="width:550px">
+                    <h3>分支管理 - {{ branchDocTitle }}</h3>
+                    <ul class="version-list" v-if="branchList.length">
+                        <li v-for="b in branchList" :key="b.id" :style="isActiveBranch(b) ? 'background:#ECFDF5;border:1px solid #86EFAC' : (b.branchName==='main' ? 'background:#EFF6FF' : '')">
+                            <div>
+                                <strong>{{ b.branchName }}</strong>
+                                <span v-if="b.branchName==='main'" class="tag tag-blue" style="margin-left:6px">主分支</span>
+                                <span v-if="isActiveBranch(b)" class="tag tag-green" style="margin-left:6px">当前查看</span>
+                                <span style="margin-left:8px;color:var(--text-muted)">版本: {{ b.currentVersion }}</span>
+                                <span style="margin-left:8px;color:var(--text-light)">{{ formatTime(b.updateTime) }}</span>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-success" :disabled="isActiveBranch(b)" @click="checkoutBranch(b)">
+                                    {{ isActiveBranch(b) ? '当前分支' : '切换查看' }}
+                                </button>
+                                <button class="btn btn-sm btn-primary" @click="showBranchVersions(b)">版本历史</button>
+                                <button class="btn btn-sm btn-warning" @click="showNewVersionModalFromBranch(b)">上传版本</button>
+                                <button v-if="b.branchName!=='main'" class="btn btn-sm btn-danger" @click="deleteBranch(b)">删除</button>
+                            </div>
+                        </li>
+                    </ul>
+                    <div v-else class="empty-state"><p>暂无分支</p></div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" @click="showCreateBranchModal">新建分支</button>
+                        <button class="btn btn-success" @click="showMergeModal">合并分支</button>
+                        <button class="btn btn-secondary" @click="showModal=null">关闭</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Branch Modal -->
+            <div v-if="showBranchModal==='create'" class="modal-overlay" @click.self="showBranchModal=null">
+                <div class="modal" style="width:450px">
+                    <h3>新建分支</h3>
+                    <div class="form-group">
+                        <label>源分支</label>
+                        <select v-model="sourceBranchForCreate" style="width:100%;padding:8px">
+                            <option v-for="b in branchList" :key="b.id" :value="b.branchName">{{ b.branchName }}</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>新分支名称</label>
+                        <input v-model="newBranchName" placeholder="例如：dev">
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" @click="createBranch">创建</button>
+                        <button class="btn btn-secondary" @click="showBranchModal=null">取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Merge Branch Modal -->
+            <div v-if="showBranchModal==='merge'" class="modal-overlay" @click.self="showBranchModal=null">
+                <div class="modal" style="width:450px">
+                    <h3>合并分支</h3>
+                    <div class="form-group">
+                        <label>源分支（被合并）</label>
+                        <select v-model="mergeSource" style="width:100%;padding:8px">
+                            <option v-for="b in branchList" :key="b.id" :value="b.branchName">{{ b.branchName }}</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>目标分支（合并到）</label>
+                        <select v-model="mergeTarget" style="width:100%;padding:8px">
+                            <option v-for="b in branchList" :key="b.id" :value="b.branchName">{{ b.branchName }}</option>
+                        </select>
+                    </div>
+                    <p style="color:var(--text-muted);font-size:13px;margin-top:8px">将"源分支"的当前文件复制到"目标分支"并创建新版本记录。</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-success" @click="mergeBranch">合并</button>
+                        <button class="btn btn-secondary" @click="showBranchModal=null">取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rename Modal -->
+            <div v-if="showModal==='rename'" class="modal-overlay" @click.self="showModal=null">
+                <div class="modal">
+                    <h3>重命名文件</h3>
+                    <div class="form-group"><label>新文件名</label><input v-model="renameNewName" placeholder="输入新文件名"></div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" @click="showModal=null">取消</button>
+                        <button class="btn btn-primary" @click="doRename">确定</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm Modal -->
+            <div v-if="showModal==='confirm'" class="modal-overlay" @click.self="cancelConfirm">
+                <div class="modal" style="max-width:420px">
+                    <h3 style="display:flex;align-items:center;gap:10px">
+                        <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--danger-bg);color:var(--danger);font-size:18px">!</span>
+                        {{ confirmData.title }}
+                    </h3>
+                    <p style="color:var(--text-muted);font-size:14px;margin-top:4px">{{ confirmData.message }}</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" @click="cancelConfirm">取消</button>
+                        <button class="btn btn-danger" @click="doConfirm">删除</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '';
+const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
+
+createApp({
+    setup() {
+        // Auth
+        const token = ref(localStorage.getItem('docmanager_token') || '');
+        const refreshToken = ref(localStorage.getItem('docmanager_refresh') || '');
+        const authMode = ref('login');
+        const authError = ref('');
+        const authLoading = ref(false);
+        const loginForm = reactive({ username: '', password: '' });
+        const registerForm = reactive({ username: '', password: '', email: '', phone: '' });
+        const currentUser = reactive({ id: null, username: '', email: '', phone: '', role: '', status: 1 });
+
+        // Pages
+        const currentPage = ref('dashboard');
+        const showModal = ref(null);
+        const confirmData = reactive({ title: '', message: '', onConfirm: null });
+
+        function showConfirm(title, message) {
+            return new Promise((resolve) => {
+                confirmData.title = title;
+                confirmData.message = message;
+                confirmData.onConfirm = () => resolve(true);
+                showModal.value = 'confirm';
+            });
+        }
+        function doConfirm() {
+            const cb = confirmData.onConfirm;
+            showModal.value = null;
+            confirmData.onConfirm = null;
+            if (cb) cb();
+        }
+        function cancelConfirm() {
+            showModal.value = null;
+            confirmData.onConfirm = null;
+        }
+        const toast = reactive({ show: false, message: '', type: 'success' });
+
+        // Files
+        const fileList = ref([]);
+        const filePage = ref(1);
+        const fileTotalPages = ref(1);
+        const fileSearchKeyword = ref('');
+        const fileTypeFilter = ref('');
+        const uploadFiles = ref([]);
+        const uploading = ref(false);
+        const renameFileId = ref('');
+        const renameNewName = ref('');
+
+        // Documents
+        const docList = ref([]);
+        const docSearchKeyword = ref('');
+        const docTypeFilter = ref('');
+        const fileOwnerFilterUserId = ref('');
+        const docOwnerFilterUserId = ref('');
+        const userList = ref([]);
+        const manageUserList = ref([]);
+        const passwordForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' });
+        const passwordLoading = ref(false);
+        const resetPasswordUserId = ref(null);
+        const resetPasswordUsername = ref('');
+        const resetPasswordNew = ref('');
+        const globalDocVersion = ref('');
+        const recentDocs = ref([]);
+        const versionList = ref([]);
+        const versionDocTitle = ref('');
+        const versionDocId = ref('');
+        const newVersionDocId = ref('');
+        const newVersionDocTitle = ref('');
+        const newVersionNumber = ref('');
+        const newVersionChangeLog = ref('');
+        const newVersionFile = ref(null);
+
+        // Branch management
+        const branchList = ref([]);
+        const branchDocId = ref('');
+        const branchDocTitle = ref('');
+        const activeBranchView = ref({});
+        const showBranchModal = ref(null);
+        const newBranchName = ref('');
+        const sourceBranchForCreate = ref('');
+        const mergeSource = ref('');
+        const mergeTarget = ref('');
+
+        // AI Chat
+        const aiChatHistory = ref([]);
+        const aiChatInput = ref('');
+        const aiChatLoading = ref(false);
+        const aiChatFormat = ref('');
+        const aiGeneratedFiles = ref([]);
+        const pptConversationId = ref('');
+        const pptRefinable = ref(false);
+        const pptLastFileId = ref('');
+        const pptVersions = ref([]);
+        const pptCurrentVersionId = ref('');
+        const pptDraftVersionId = ref('');
+        const pptVersionLoading = ref(false);
+        const pptRefs = ref([]);
+        const pptRefUploading = ref(false);
+        const pptRefPreferredRole = ref('auto');
+        const pptLibraryCandidates = ref([]);
+        const pptLibraryLoading = ref(false);
+
+        // RAG
+        const ragQuery = ref('');
+        const ragStrategy = ref('rerank');
+        const ragHistory = ref([]);
+        const ragLoading = ref(false);
+
+        // RAG Manage
+        const ragManageFiles = ref([]);
+        const ragDocList = ref([]);
+        const ragDocPage = ref(1);
+        const ragDocPageSize = 10;
+        const ragDocTotalPages = computed(() => Math.ceil(ragDocList.value.length / ragDocPageSize));
+        const ragDocListPaginated = computed(() => {
+            const start = (ragDocPage.value - 1) * ragDocPageSize;
+            return ragDocList.value.slice(start, start + ragDocPageSize);
+        });
+        const ragUploading = ref(false);
+        const ragImportCandidates = ref([]);
+        const ragImportLoading = ref(false);
+        const ragImportSelected = ref([]);
+
+        // Chat resize drag
+        const chatDragActive = ref(false);
+
+        function startChatDrag() {
+            chatDragActive.value = true;
+            const container = document.querySelector('.chat-container');
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const messages = container.querySelector('.chat-messages');
+
+            function onMove(e) {
+                const pct = Math.max(20, Math.min(85, ((e.clientY - rect.top) / rect.height) * 100));
+                messages.style.flex = 'none';
+                messages.style.height = pct + '%';
+            }
+            function onUp() {
+                chatDragActive.value = false;
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        }
+
+        // AIOps
+        const aiopsMetrics = reactive({});
+        const aiAnalysis = ref('');
+        const aiAnalysisLoading = ref(false);
+        const alertRecords = ref([]);
+        const dailyTrends = ref([]);
+        let tokenChartInstance = null;
+
+        // Stats
+        const stats = reactive({ documents: 0, files: 0, ragDocs: 0, aiChats: 0, ragQueries: 0, pptChats: 0 });
+
+        const pageTitle = computed(() => {
+            const titles = {
+                dashboard: '仪表盘', files: '文件管理', upload: '文档与文件上传',
+                documents: '文档管理',
+                'ai-chat': 'PPT 生成',
+                'rag-manage': '知识库',
+                aiops: '系统监控', profile: '个人信息', 'user-manage': '用户管理'
+            };
+            return titles[currentPage.value] || 'DocManager';
+        });
+
+        const pptChatPlaceholder = computed(() => {
+            if (pptRefinable.value) {
+                return '描述要修改的内容，如「第3页标题改大」「整体换成深色主题」(Enter发送)';
+            }
+            if (pptConversationId.value) {
+                return '回复AI的问题，完善你的需求... (Enter发送)';
+            }
+            return '描述你想要的PPT (Enter发送, Ctrl+Enter换行)';
+        });
+
+        const isAdmin = computed(() => (currentUser.role || '').toUpperCase() === 'ADMIN');
+
+        // Axios setup
+        function getAxios() {
+            const instance = axios.create({ baseURL: API, timeout: 300000 });
+            instance.interceptors.request.use(config => {
+                if (token.value) config.headers['Authorization'] = 'Bearer ' + token.value;
+                return config;
+            });
+            instance.interceptors.response.use(
+                res => res,
+                async err => {
+                    if (err.response && err.response.status === 401) {
+                        try {
+                            const r = await axios.post(API + '/api/users/refresh', null, { params: { refreshToken: refreshToken.value } });
+                            if (r.data.code === 200) {
+                                token.value = r.data.data;
+                                localStorage.setItem('docmanager_token', token.value);
+                                err.config.headers['Authorization'] = 'Bearer ' + token.value;
+                                return axios(err.config);
+                            }
+                        } catch(e) { logout(); }
+                    }
+                    return Promise.reject(err);
+                }
+            );
+            return instance;
+        }
+
+        function showToast(msg, type='success') {
+            toast.message = msg; toast.type = type; toast.show = true;
+            setTimeout(() => toast.show = false, 3000);
+        }
+
+        function handleError(err, fallback='操作失败') {
+            const msg = err.response?.data?.message || err.message || fallback;
+            showToast(msg, 'error');
+        }
+
+        /** 切换账号时清空上一用户的界面状态（聊天、列表、筛选等） */
+        function resetSessionUIState() {
+            ragHistory.value = [];
+            ragQuery.value = '';
+            ragLoading.value = false;
+
+            aiChatHistory.value = [];
+            aiChatInput.value = '';
+            aiChatLoading.value = false;
+            pptConversationId.value = '';
+            pptRefinable.value = false;
+            pptLastFileId.value = '';
+            pptVersions.value = [];
+            pptCurrentVersionId.value = '';
+            pptDraftVersionId.value = '';
+            pptRefs.value = [];
+            pptRefUploading.value = false;
+            aiGeneratedFiles.value = [];
+
+            docList.value = [];
+            fileList.value = [];
+            recentDocs.value = [];
+            ragDocList.value = [];
+            ragImportCandidates.value = [];
+            ragImportSelected.value = [];
+            ragManageFiles.value = [];
+            docOwnerFilterUserId.value = '';
+            fileOwnerFilterUserId.value = '';
+            userList.value = [];
+            manageUserList.value = [];
+            activeBranchView.value = {};
+            uploadFiles.value = [];
+            showModal.value = null;
+            currentPage.value = 'dashboard';
+
+            Object.assign(stats, { documents: 0, files: 0, ragDocs: 0, aiChats: 0, ragQueries: 0, pptChats: 0 });
+            Object.assign(aiopsMetrics, {});
+            alertRecords.value = [];
+            dailyTrends.value = [];
+            aiAnalysis.value = '';
+        }
+
+        async function finishPptSessionIfAny() {
+            if (!pptConversationId.value || !token.value) return;
+            try {
+                const api = getAxios();
+                await api.post(API + '/api/ai/chat/ppt/finish', { conversationId: pptConversationId.value });
+            } catch (e) { /* ignore */ }
+        }
+
+        // Auth
+        async function login() {
+            authError.value = ''; authLoading.value = true;
+            try {
+                const r = await axios.post(API + '/api/users/login', loginForm);
+                if (r.data.code === 200) {
+                    resetSessionUIState();
+                    const d = r.data.data;
+                    token.value = d.accessToken; refreshToken.value = d.refreshToken;
+                    localStorage.setItem('docmanager_token', d.accessToken);
+                    localStorage.setItem('docmanager_refresh', d.refreshToken);
+                    Object.assign(currentUser, d.user);
+                    localStorage.setItem('docmanager_user', JSON.stringify(d.user));
+                    showToast('登录成功');
+                    loadDashboardData();
+                } else { authError.value = r.data.message; }
+            } catch(e) { authError.value = e.response?.data?.message || '登录失败'; }
+            finally { authLoading.value = false; }
+        }
+
+        async function register() {
+            authError.value = ''; authLoading.value = true;
+            try {
+                const r = await axios.post(API + '/api/users/register', registerForm);
+                if (r.data.code === 200) {
+                    showToast('注册成功，请登录'); authMode.value = 'login';
+                    loginForm.username = registerForm.username;
+                } else { authError.value = r.data.message; }
+            } catch(e) { authError.value = e.response?.data?.message || '注册失败'; }
+            finally { authLoading.value = false; }
+        }
+
+        async function logout() {
+            await finishPptSessionIfAny();
+            const api = token.value ? getAxios() : null;
+            if (api) api.post(API + '/api/users/logout').catch(() => {});
+            resetSessionUIState();
+            token.value = ''; refreshToken.value = '';
+            localStorage.removeItem('docmanager_token'); localStorage.removeItem('docmanager_refresh'); localStorage.removeItem('docmanager_user');
+            Object.assign(currentUser, { id: null, username: '', email: '', phone: '', role: '', status: 1 });
+            authMode.value = 'login';
+        }
+
+        // Navigation
+        function goTo(page) {
+            if (page === 'aiops' && !isAdmin.value) {
+                showToast('仅管理员可访问系统监控', 'error');
+                return;
+            }
+            if (page === 'user-manage' && !isAdmin.value) {
+                showToast('仅管理员可访问用户管理', 'error');
+                return;
+            }
+            currentPage.value = page;
+            if (page === 'files') { loadUserList(); loadFiles(); }
+            else if (page === 'documents') { loadUserList(); loadDocuments(); }
+            else if (page === 'dashboard') loadDashboardData();
+            else if (page === 'aiops') { loadAIOpsMetrics(); loadAlertRecords(); }
+            else if (page === 'ai-chat') { loadAiGeneratedFiles(); loadPptLibraryCandidates(); if (pptConversationId.value) loadPptRefs(); }
+            else if (page === 'rag-manage') { loadRagDocuments(); loadRagImportCandidates(); }
+            else if (page === 'user-manage') loadManageUsers();
+        }
+
+        function resolveUserIdByName(username) {
+            if (!username) return '-';
+            const u = userList.value.find(x => x.username === username)
+                || manageUserList.value.find(x => x.username === username);
+            return u ? u.id : '-';
+        }
+
+        // Dashboard
+        async function loadDashboardData() {
+            try {
+                const api = getAxios();
+                const uid = currentUser.id;
+                if (!uid) return;
+                const [docs, files] = await Promise.all([
+                    api.get(API + '/api/documents/files'),
+                    api.get(API + '/api/files/list', { params: { page: 1, size: 1 } })
+                ]);
+                stats.documents = docs.data.data?.length || 0;
+                stats.files = files.data.data?.total || 0;
+                recentDocs.value = (docs.data.data || []).slice(0, 5);
+                try {
+                    const ragRes = await api.get(API + '/api/ai/rag/documents');
+                    stats.ragDocs = ragRes.data.data?.length || 0;
+                } catch(e) {}
+                try {
+                    const chatRes = await api.get(API + '/api/users/me/ai-chat-count');
+                    const d = chatRes.data.data || {};
+                    stats.aiChats = d.aiChatCount || 0;
+                    stats.ragQueries = d.ragQueryCount || 0;
+                    stats.pptChats = d.pptChatCount || 0;
+                } catch(e) {}
+            } catch(e) {}
+        }
+
+        // Files
+        async function loadFiles() {
+            try {
+                const api = getAxios();
+                const params = { page: filePage.value, size: 10, sortBy: 'createTime', direction: 'desc' };
+                if (fileTypeFilter.value) params.fileType = fileTypeFilter.value;
+                if (isAdmin.value && fileOwnerFilterUserId.value) params.ownerUserId = fileOwnerFilterUserId.value;
+                const r = await api.get(API + '/api/files/list', { params });
+                if (r.data.data) {
+                    fileList.value = r.data.data.records || [];
+                    fileTotalPages.value = r.data.data.pages || 1;
+                }
+            } catch(e) { handleError(e, '加载文件列表失败'); }
+        }
+
+        async function filterByType(type) {
+            fileTypeFilter.value = type;
+            filePage.value = 1;
+            await loadFiles();
+        }
+
+        async function resetFileType() {
+            fileTypeFilter.value = '';
+            filePage.value = 1;
+            await loadFiles();
+        }
+
+        async function searchFiles() {
+            filePage.value = 1;
+            if (!fileSearchKeyword.value) { loadFiles(); return; }
+            try {
+                const api = getAxios();
+                const params = { keyword: fileSearchKeyword.value, page: 1, size: 20 };
+                if (isAdmin.value && fileOwnerFilterUserId.value) params.ownerUserId = fileOwnerFilterUserId.value;
+                const r = await api.get(API + '/api/files/search', { params });
+                if (r.data.data) {
+                    fileList.value = r.data.data.records || [];
+                    fileTotalPages.value = r.data.data.pages || 1;
+                }
+            } catch(e) { handleError(e, '搜索失败'); }
+        }
+
+        function isDocumentFile(file) {
+            const type = (file.type || '').toLowerCase();
+            const name = (file.name || '').toLowerCase();
+            return type.includes('pdf') || type.includes('word') || type.includes('msword')
+                || type.includes('csv') || type.includes('markdown') || type.includes('powerpoint') || type.includes('presentation')
+                || type.includes('html')
+                || name.endsWith('.pdf') || name.endsWith('.doc') || name.endsWith('.docx')
+                || name.endsWith('.ppt') || name.endsWith('.pptx') || name.endsWith('.csv') || name.endsWith('.md')
+                || name.endsWith('.html') || name.endsWith('.htm');
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            const newItems = files.map(f => ({ name: f.name, size: f.size, file: f, status: 'pending', isDoc: isDocumentFile(f) }));
+            uploadFiles.value = uploadFiles.value.concat(newItems);
+            e.target.value = '';
+        }
+
+        function handleDrop(e) {
+            const files = Array.from(e.dataTransfer.files);
+            const newItems = files.map(f => ({ name: f.name, size: f.size, file: f, status: 'pending', isDoc: isDocumentFile(f) }));
+            uploadFiles.value = uploadFiles.value.concat(newItems);
+        }
+
+        async function uploadAllFiles() {
+            uploading.value = true;
+            const api = getAxios();
+            for (const f of uploadFiles.value) {
+                try {
+                    const form = new FormData();
+                    form.append('file', f.file);
+                    if (f.isDoc) {
+                        const ver = globalDocVersion.value || '1.0.0';
+                        form.append('version', ver);
+                        form.append('changeLog', '');
+                        await api.post(API + '/api/documents/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                    } else {
+                        await api.post(API + '/api/files/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                    }
+                    f.status = 'done';
+                } catch(e) { f.status = 'error'; }
+            }
+            uploading.value = false;
+            showToast('上传完成');
+        }
+
+        async function downloadFile(fileId, fileName) {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/files/download/' + fileId, { responseType: 'blob' });
+                const url = URL.createObjectURL(r.data);
+                const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
+                URL.revokeObjectURL(url);
+            } catch(e) { handleError(e, '下载失败'); }
+        }
+
+        function previewFile(file) {
+            const type = file.fileType || '';
+            if (type.startsWith('image/') || type.includes('pdf')) {
+                window.open(API + '/api/files/preview/' + file.fileId + '?token=' + token.value, '_blank');
+            } else {
+                showToast('该文件类型不支持在线预览');
+            }
+        }
+
+        function previewDoc(doc) {
+            const type = (doc.fileType || '').toLowerCase();
+            const name = encodeURIComponent(doc.title || '');
+            if (type.startsWith('image/') || type.includes('pdf')) {
+                window.open(API + '/api/files/preview/' + doc.currentFileId + '?token=' + token.value + '&fileName=' + name, '_blank');
+            } else if (type.includes('html') || (doc.title || '').toLowerCase().endsWith('.html') || (doc.title || '').toLowerCase().endsWith('.htm')) {
+                window.open(API + '/api/files/preview/' + doc.currentFileId + '?token=' + token.value + '&fileName=' + name, '_blank');
+            } else {
+                showToast('该类型无法预览');
+            }
+        }
+
+        async function deleteFile(fileId) {
+            if (!await showConfirm('删除文件', '确定要删除此文件吗？此操作不可撤销。')) return;
+            try {
+                const api = getAxios();
+                await api.delete(API + '/api/files/' + fileId);
+                showToast('删除成功'); loadFiles();
+            } catch(e) { handleError(e, '删除失败'); }
+        }
+
+        function showRenameModal(f) {
+            renameFileId.value = f.fileId; renameNewName.value = f.fileName; showModal.value = 'rename';
+        }
+
+        async function doRename() {
+            try {
+                const api = getAxios();
+                await api.put(API + '/api/files/' + renameFileId.value + '/rename', null, { params: { newName: renameNewName.value } });
+                showToast('重命名成功'); showModal.value = null; loadFiles();
+            } catch(e) { handleError(e, '重命名失败'); }
+        }
+
+        // Documents
+        function applyBranchOverlay(docs) {
+            return (docs || []).map(doc => {
+                const logicalId = doc.documentId || doc.id;
+                const active = activeBranchView.value[logicalId];
+                if (active && active.branchName !== 'main') {
+                    return { ...active, title: doc.title, documentId: logicalId };
+                }
+                return { ...doc, documentId: logicalId };
+            });
+        }
+
+        async function loadUserList() {
+            if (!isAdmin.value) return;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/users/list');
+                userList.value = r.data.data || [];
+            } catch(e) { /* 非管理员或接口不可用 */ }
+        }
+
+        async function loadManageUsers() {
+            if (!isAdmin.value) return;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/users/manage');
+                manageUserList.value = r.data.data || [];
+                userList.value = (r.data.data || []).filter(u => u.status === 1);
+            } catch(e) { handleError(e, '加载用户列表失败'); }
+        }
+
+        function openResetPasswordModal(user) {
+            resetPasswordUserId.value = user.id;
+            resetPasswordUsername.value = user.username;
+            resetPasswordNew.value = '';
+            showModal.value = 'resetPassword';
+        }
+
+        async function submitAdminResetPassword() {
+            if (!resetPasswordNew.value || resetPasswordNew.value.length < 6) {
+                showToast('新密码至少6位', 'error'); return;
+            }
+            passwordLoading.value = true;
+            try {
+                const api = getAxios();
+                await api.put(API + '/api/users/' + resetPasswordUserId.value + '/password', {
+                    newPassword: resetPasswordNew.value
+                });
+                showToast('密码已重置', 'success');
+                showModal.value = null;
+            } catch(e) { handleError(e, '重置密码失败'); }
+            finally { passwordLoading.value = false; }
+        }
+
+        async function toggleUserStatus(user, status) {
+            const action = status === 1 ? '启用' : '禁用';
+            if (!await showConfirm(action + '用户', '确定要' + action + '用户「' + user.username + '」吗？')) return;
+            try {
+                const api = getAxios();
+                await api.put(API + '/api/users/' + user.id + '/status', null, { params: { status } });
+                showToast('已' + action, 'success');
+                loadManageUsers();
+            } catch(e) { handleError(e, action + '失败'); }
+        }
+
+        function openChangePasswordModal() {
+            passwordForm.oldPassword = '';
+            passwordForm.newPassword = '';
+            passwordForm.confirmPassword = '';
+            showModal.value = 'changePassword';
+        }
+
+        async function changeMyPassword() {
+            if (!passwordForm.oldPassword || !passwordForm.newPassword) {
+                showToast('请填写原密码和新密码', 'error'); return;
+            }
+            if (passwordForm.newPassword.length < 6) {
+                showToast('新密码至少6位', 'error'); return;
+            }
+            if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+                showToast('两次输入的新密码不一致', 'error'); return;
+            }
+            passwordLoading.value = true;
+            try {
+                const api = getAxios();
+                await api.put(API + '/api/users/me/password', {
+                    oldPassword: passwordForm.oldPassword,
+                    newPassword: passwordForm.newPassword
+                });
+                showToast('密码修改成功', 'success');
+                passwordForm.oldPassword = '';
+                passwordForm.newPassword = '';
+                passwordForm.confirmPassword = '';
+                showModal.value = null;
+            } catch(e) { handleError(e, '修改密码失败'); }
+            finally { passwordLoading.value = false; }
+        }
+
+        async function loadDocuments() {
+            try {
+                const api = getAxios();
+                const params = {};
+                if (isAdmin.value && docOwnerFilterUserId.value) {
+                    params.ownerUserId = docOwnerFilterUserId.value;
+                }
+                const r = await api.get(API + '/api/documents/files', { params });
+                docList.value = applyBranchOverlay(r.data.data || []);
+            } catch(e) { handleError(e, '加载文档失败'); }
+        }
+
+        function searchDocFiles() {
+            loadDocuments().then(() => {
+                if (docSearchKeyword.value) {
+                    const kw = docSearchKeyword.value.toLowerCase();
+                    docList.value = docList.value.filter(d => d.title.toLowerCase().includes(kw));
+                }
+                if (docTypeFilter.value) {
+                    const tf = docTypeFilter.value.toLowerCase();
+                    docList.value = docList.value.filter(d => {
+                        const type = (d.fileType || '').toLowerCase();
+                        if (tf === 'pdf') return type.includes('pdf');
+                        if (tf === 'word') return type.includes('word') || type.includes('msword');
+                        if (tf === 'ppt') return type.includes('powerpoint') || type.includes('presentation');
+                        if (tf === 'csv') return type.includes('csv');
+                        if (tf === 'md') return type.includes('markdown') || d.title.toLowerCase().endsWith('.md');
+                        if (tf === 'html') return type.includes('html')
+                            || d.title.toLowerCase().endsWith('.html') || d.title.toLowerCase().endsWith('.htm');
+                        return true;
+                    });
+                }
+            });
+        }
+
+        function isActiveBranch(branch) {
+            const logicalId = branch.documentId || branchDocId.value;
+            const active = activeBranchView.value[logicalId];
+            if (!active) return branch.branchName === 'main';
+            return active.branchName === branch.branchName;
+        }
+
+        function checkoutBranch(branch) {
+            const logicalId = branch.documentId || branchDocId.value;
+            if (branch.branchName === 'main') {
+                delete activeBranchView.value[logicalId];
+            } else {
+                activeBranchView.value[logicalId] = branch;
+            }
+            loadDocuments();
+            showModal.value = null;
+            showToast('已切换到分支: ' + branch.branchName);
+        }
+
+        function showBranchVersions(branch) {
+            versionDocTitle.value = branchDocTitle.value + ' [' + branch.branchName + ']';
+            versionDocId.value = branch.id;
+            showDocVersions({ id: branch.id, title: branchDocTitle.value + ' [' + branch.branchName + ']' });
+        }
+
+        function showNewVersionModalFromBranch(branch) {
+            showNewVersionModal({
+                id: branch.id,
+                title: branchDocTitle.value + ' [' + branch.branchName + ']'
+            });
+        }
+
+        function filterDocByType(type) {
+            docTypeFilter.value = type;
+            searchDocFiles();
+        }
+
+        async function downloadDocFile(fileId, fileName) {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/files/download/' + fileId, { responseType: 'blob' });
+                const url = URL.createObjectURL(r.data);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName || fileId;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) { handleError(e, '下载失败'); }
+        }
+
+        function showNewVersionModal(doc) {
+            newVersionDocId.value = doc.id;
+            newVersionDocTitle.value = doc.title;
+            newVersionNumber.value = '';
+            newVersionChangeLog.value = '';
+            newVersionFile.value = null;
+            showModal.value = 'newVersion';
+        }
+
+        function onNewVersionFileSelect(e) {
+            newVersionFile.value = e.target.files[0] || null;
+        }
+
+        async function uploadNewVersion() {
+            if (!newVersionFile.value) { showToast('请选择文件'); return; }
+            if (!newVersionNumber.value) { showToast('请输入版本号'); return; }
+            try {
+                const api = getAxios();
+                const form = new FormData();
+                form.append('file', newVersionFile.value);
+                form.append('version', newVersionNumber.value);
+                form.append('changeLog', newVersionChangeLog.value || '');
+                await api.post(API + '/api/documents/files/' + newVersionDocId.value + '/versions', form, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                showToast('新版本上传成功');
+                showModal.value = null;
+                await loadDocuments();
+                if (branchDocId.value) {
+                    const logicalId = branchDocId.value;
+                    const active = activeBranchView.value[logicalId];
+                    if (active) {
+                        const r = await api.get(API + '/api/documents/' + logicalId + '/branches');
+                        const updated = (r.data.data || []).find(b => b.branchName === active.branchName);
+                        if (updated) activeBranchView.value[logicalId] = updated;
+                    }
+                    showBranches({ documentId: logicalId, id: logicalId, title: branchDocTitle.value });
+                }
+            } catch(e) { handleError(e, '上传新版本失败'); }
+        }
+
+        async function showDocVersions(doc) {
+            versionDocTitle.value = doc.title;
+            versionDocId.value = doc.id;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/documents/files/' + doc.id + '/versions');
+                versionList.value = r.data.data || [];
+                showModal.value = 'versions';
+            } catch(e) { handleError(e, '获取版本失败'); }
+        }
+
+        async function restoreDocVersion(docId, versionId) {
+            try {
+                const api = getAxios();
+                await api.post(API + '/api/documents/files/' + docId + '/restore/' + versionId);
+                showToast('版本已恢复');
+                showModal.value = null;
+                for (const [logicalId, active] of Object.entries(activeBranchView.value)) {
+                    if (active.id === docId) {
+                        const r = await api.get(API + '/api/documents/' + logicalId + '/branches');
+                        const updated = (r.data.data || []).find(b => b.branchName === active.branchName);
+                        if (updated) activeBranchView.value[logicalId] = updated;
+                        break;
+                    }
+                }
+                loadDocuments();
+            } catch(e) { handleError(e, '恢复失败'); }
+        }
+
+        async function deleteDocFile(doc) {
+            const logicalId = doc.documentId || doc.id;
+            if (!await showConfirm('删除文档', '确定要删除此文档及其所有分支吗？此操作不可撤销。')) return;
+            try {
+                const api = getAxios();
+                await api.delete(API + '/api/documents/files/' + logicalId);
+                delete activeBranchView.value[logicalId];
+                showToast('删除成功');
+                loadDocuments();
+            } catch(e) { handleError(e, '删除失败'); }
+        }
+
+        async function showBranches(doc) {
+            branchDocId.value = doc.documentId || doc.id;
+            branchDocTitle.value = doc.title;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/documents/' + branchDocId.value + '/branches');
+                branchList.value = r.data.data || [];
+                showModal.value = 'branches';
+            } catch(e) { handleError(e, '获取分支失败'); }
+        }
+
+        function showCreateBranchModal() {
+            sourceBranchForCreate.value = 'main';
+            newBranchName.value = '';
+            showBranchModal.value = 'create';
+        }
+
+        function showMergeModal() {
+            mergeSource.value = '';
+            mergeTarget.value = 'main';
+            showBranchModal.value = 'merge';
+        }
+
+        async function createBranch() {
+            if (!newBranchName.value) { showToast('请输入分支名称'); return; }
+            try {
+                const api = getAxios();
+                await api.post(API + '/api/documents/' + branchDocId.value + '/branches', null, {
+                    params: { sourceBranchName: sourceBranchForCreate.value, newBranchName: newBranchName.value }
+                });
+                showToast('分支创建成功');
+                showBranchModal.value = null;
+                showBranches({ id: branchDocId.value, title: branchDocTitle.value, documentId: branchDocId.value });
+            } catch(e) { handleError(e, '创建分支失败'); }
+        }
+
+        async function mergeBranch() {
+            if (!mergeSource.value || !mergeTarget.value) { showToast('请选择源分支和目标分支'); return; }
+            if (mergeSource.value === mergeTarget.value) { showToast('源分支和目标分支不能相同'); return; }
+            try {
+                const api = getAxios();
+                await api.post(API + '/api/documents/' + branchDocId.value + '/merge', null, {
+                    params: { sourceBranch: mergeSource.value, targetBranch: mergeTarget.value }
+                });
+                showToast('合并成功');
+                showBranchModal.value = null;
+                const logicalId = branchDocId.value;
+                const active = activeBranchView.value[logicalId];
+                if (active && (active.branchName === mergeTarget.value || active.branchName === mergeSource.value)) {
+                    const r = await api.get(API + '/api/documents/' + logicalId + '/branches');
+                    const updated = (r.data.data || []).find(b => b.branchName === active.branchName);
+                    if (updated) activeBranchView.value[logicalId] = updated;
+                }
+                showModal.value = null;
+                loadDocuments();
+            } catch(e) { handleError(e, '合并失败'); }
+        }
+
+        async function deleteBranch(branch) {
+            if (!await showConfirm('删除分支', '确定要删除分支 "' + branch.branchName + '" 吗？')) return;
+            try {
+                const api = getAxios();
+                const logicalId = branchDocId.value;
+                await api.delete(API + '/api/documents/' + logicalId + '/branches/' + branch.branchName);
+                if (activeBranchView.value[logicalId]?.branchName === branch.branchName) {
+                    delete activeBranchView.value[logicalId];
+                }
+                showToast('分支已删除');
+                loadDocuments();
+                showBranches({ id: logicalId, title: branchDocTitle.value, documentId: logicalId });
+            } catch(e) { handleError(e, '删除分支失败'); }
+        }
+
+        function switchToBranch(branch) {
+            checkoutBranch(branch);
+        }
+
+        function getFileTypeLabel(type) {
+            if (!type) return '未知';
+            if (type.includes('pdf')) return 'PDF';
+            if (type.includes('word') || type.includes('msword')) return 'Word';
+            if (type.includes('csv')) return 'CSV';
+            if (type.includes('markdown')) return 'Markdown';
+            if (type.includes('powerpoint') || type.includes('presentation')) return 'PPT';
+            if (type.includes('html')) return 'HTML';
+            if (type.includes('excel') || type.includes('spreadsheet')) return 'Excel';
+            return type;
+        }
+
+        // AI Chat
+        async function loadPptRefs() {
+            if (!pptConversationId.value) {
+                pptRefs.value = [];
+                return;
+            }
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/chat/ppt/refs', { params: { conversationId: pptConversationId.value } });
+                pptRefs.value = r.data.data?.refs || [];
+            } catch(e) {
+                pptRefs.value = [];
+            }
+        }
+
+        async function uploadPptRefFile(file) {
+            if (!file) return;
+            pptRefUploading.value = true;
+            try {
+                const api = getAxios();
+                const form = new FormData();
+                form.append('file', file);
+                if (pptConversationId.value) form.append('conversationId', pptConversationId.value);
+                form.append('preferredRole', pptRefPreferredRole.value);
+                const r = await api.post(API + '/api/ai/chat/ppt/refs/upload', form, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                if (r.data.code !== 200) throw new Error(r.data.message || '上传失败');
+                const data = r.data.data;
+                pptConversationId.value = data.conversationId || pptConversationId.value;
+                showToast(data.message || '参考文档已添加', data.autoDowngraded ? 'warning' : 'success');
+                await loadPptRefs();
+            } catch(e) {
+                handleError(e, '上传参考文档失败');
+            }
+            pptRefUploading.value = false;
+        }
+
+        function handlePptRefFileSelect(e) {
+            const files = e.target.files;
+            if (!files || !files.length) return;
+            (async () => {
+                for (const f of files) await uploadPptRefFile(f);
+            })();
+            e.target.value = '';
+        }
+
+        function handlePptRefDrop(e) {
+            const files = e.dataTransfer?.files;
+            if (!files || !files.length) return;
+            (async () => {
+                for (const f of files) await uploadPptRefFile(f);
+            })();
+        }
+
+        async function loadPptLibraryCandidates() {
+            pptLibraryLoading.value = true;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/rag/import/candidates');
+                pptLibraryCandidates.value = r.data.data || [];
+            } catch(e) {
+                handleError(e, '加载文档库失败');
+            }
+            pptLibraryLoading.value = false;
+        }
+
+        async function attachPptRefFromLibrary(doc) {
+            pptRefUploading.value = true;
+            try {
+                const api = getAxios();
+                const body = { preferredRole: pptRefPreferredRole.value };
+                if (pptConversationId.value) body.conversationId = pptConversationId.value;
+                const r = await api.post(
+                    API + '/api/ai/chat/ppt/refs/from-library/' + encodeURIComponent(doc.sourceDocumentId),
+                    body
+                );
+                if (r.data.code !== 200) throw new Error(r.data.message || '添加失败');
+                const data = r.data.data;
+                pptConversationId.value = data.conversationId || pptConversationId.value;
+                showToast(data.message || '已从文档库添加', data.autoDowngraded ? 'warning' : 'success');
+                await loadPptRefs();
+            } catch(e) {
+                handleError(e, '从文档库添加失败');
+            }
+            pptRefUploading.value = false;
+        }
+
+        async function removePptRef(refId) {
+            if (!pptConversationId.value) return;
+            pptRefUploading.value = true;
+            try {
+                const api = getAxios();
+                await api.delete(API + '/api/ai/chat/ppt/refs/' + refId, {
+                    params: { conversationId: pptConversationId.value }
+                });
+                showToast('已移除参考文档');
+                await loadPptRefs();
+            } catch(e) {
+                handleError(e, '移除失败');
+            }
+            pptRefUploading.value = false;
+        }
+
+        async function startNewPptSession() {
+            if (pptConversationId.value) {
+                try {
+                    const api = getAxios();
+                    await api.post(API + '/api/ai/chat/ppt/finish', { conversationId: pptConversationId.value });
+                } catch(e) { /* ignore */ }
+            }
+            pptConversationId.value = '';
+            pptRefinable.value = false;
+            pptLastFileId.value = '';
+            pptVersions.value = [];
+            pptCurrentVersionId.value = '';
+            pptDraftVersionId.value = '';
+            pptRefs.value = [];
+            aiChatHistory.value = [];
+            showToast('已开始新的PPT制作');
+        }
+
+        async function loadPptVersions() {
+            if (!pptLastFileId.value) {
+                pptVersions.value = [];
+                return;
+            }
+            pptVersionLoading.value = true;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/chat/files/' + pptLastFileId.value + '/versions');
+                pptVersions.value = r.data.data || [];
+                const file = aiGeneratedFiles.value.find(f => f.id === pptLastFileId.value);
+                pptCurrentVersionId.value = file?.currentVersionId || '';
+                const draft = pptVersions.value.find(v => v.status === 'draft');
+                pptDraftVersionId.value = draft ? draft.id : '';
+            } catch(e) {
+                handleError(e, '加载版本失败');
+            }
+            pptVersionLoading.value = false;
+        }
+
+        function previewPptVersion(versionId) {
+            if (!pptLastFileId.value) return;
+            const q = 'token=' + encodeURIComponent(token.value) + '&versionId=' + encodeURIComponent(versionId);
+            window.open(API + '/api/ai/chat/files/' + pptLastFileId.value + '/preview?' + q, '_blank');
+        }
+
+        async function applyPptVersion(versionId) {
+            if (!pptLastFileId.value || !versionId) return;
+            try {
+                const api = getAxios();
+                const body = { conversationId: pptConversationId.value || undefined };
+                const r = await api.post(API + '/api/ai/chat/files/' + pptLastFileId.value + '/versions/' + versionId + '/apply', body);
+                if (r.data.code !== 200) throw new Error(r.data.message || '应用失败');
+                showToast(r.data.data?.message || '已应用所选版本');
+                pptCurrentVersionId.value = r.data.data?.currentVersionId || versionId;
+                pptDraftVersionId.value = '';
+                await loadAiGeneratedFiles();
+                await loadPptVersions();
+            } catch(e) { handleError(e, '应用版本失败'); }
+        }
+
+        async function rollbackPptVersion(versionId) {
+            if (!pptLastFileId.value || !versionId) return;
+            if (!await showConfirm('回退版本', '确定回退到该版本吗？当前未应用的草稿将被丢弃。')) return;
+            try {
+                const api = getAxios();
+                const body = { conversationId: pptConversationId.value || undefined };
+                const r = await api.post(API + '/api/ai/chat/files/' + pptLastFileId.value + '/versions/' + versionId + '/rollback', body);
+                if (r.data.code !== 200) throw new Error(r.data.message || '回退失败');
+                showToast(r.data.data?.message || '已回退到所选版本');
+                pptCurrentVersionId.value = r.data.data?.currentVersionId || versionId;
+                pptDraftVersionId.value = '';
+                await loadAiGeneratedFiles();
+                await loadPptVersions();
+            } catch(e) { handleError(e, '回退失败'); }
+        }
+
+        async function discardPptDraft() {
+            if (!pptLastFileId.value) return;
+            if (!await showConfirm('丢弃草稿', '确定丢弃当前优化草稿吗？')) return;
+            try {
+                const api = getAxios();
+                const params = {};
+                if (pptConversationId.value) params.conversationId = pptConversationId.value;
+                await api.delete(API + '/api/ai/chat/files/' + pptLastFileId.value + '/versions/draft', { params });
+                showToast('已丢弃优化草稿');
+                pptDraftVersionId.value = '';
+                await loadPptVersions();
+            } catch(e) { handleError(e, '丢弃草稿失败'); }
+        }
+
+        async function sendAiChat() {
+            if (!aiChatInput.value.trim()) return;
+            aiChatHistory.value.push({ role: 'user', content: aiChatInput.value });
+            const msg = aiChatInput.value; aiChatInput.value = ''; aiChatLoading.value = true;
+            await nextTick();
+            try {
+                const api = getAxios();
+                const body = { message: msg };
+                if (pptConversationId.value) body.conversationId = pptConversationId.value;
+                const r = await api.post(API + '/api/ai/chat/ppt', body);
+                if (r.data.code !== 200) {
+                    throw new Error(r.data.message || '请求失败');
+                }
+                const data = r.data.data;
+                if (!data) throw new Error(r.data.message || '服务器返回空响应');
+                pptConversationId.value = data.conversationId || pptConversationId.value;
+                if (data.type === 'file') {
+                    const label = data.hasDraft ? 'PPT 优化草稿已生成' : (data.isRefinement ? 'PPT 已更新' : 'PPT 已生成');
+                    let content = label + ': ' + data.fileName;
+                    if (data.hint) content += '\n\n' + data.hint;
+                    aiChatHistory.value.push({ role: 'assistant', content });
+                    pptRefinable.value = !!data.refinable;
+                    pptLastFileId.value = data.fileId || '';
+                    pptCurrentVersionId.value = data.currentVersionId || '';
+                    pptDraftVersionId.value = data.draftVersionId || '';
+                    await loadAiGeneratedFiles();
+                    await loadPptVersions();
+                } else {
+                    pptRefinable.value = !!data.refinable;
+                    aiChatHistory.value.push({ role: 'assistant', content: data.question });
+                }
+            } catch(e) {
+                aiChatHistory.value.push({ role: 'assistant', content: '生成失败: ' + (e.response?.data?.message || e.message) });
+            }
+            finally { aiChatLoading.value = false; await nextTick(); scrollToBottom('aiChatMessages'); }
+        }
+
+        async function loadAiGeneratedFiles() {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/chat/files');
+                aiGeneratedFiles.value = r.data.data || [];
+            } catch(e) {}
+        }
+
+        async function downloadGeneratedFile(id, fileName) {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/chat/files/' + id + '/download', { responseType: 'blob' });
+                const url = URL.createObjectURL(r.data);
+                const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
+                URL.revokeObjectURL(url);
+            } catch(e) { handleError(e, '下载失败'); }
+        }
+
+        function previewGeneratedFile(id, format) {
+            window.open(API + '/api/ai/chat/files/' + id + '/preview?token=' + token.value, '_blank');
+        }
+
+        async function deleteGeneratedFile(id) {
+            if (!await showConfirm('删除文件', '确定要删除此文件吗？此操作不可撤销。')) return;
+            try {
+                const api = getAxios();
+                await api.delete(API + '/api/ai/chat/files/' + id);
+                showToast('删除成功'); loadAiGeneratedFiles();
+            } catch(e) { handleError(e, '删除失败'); }
+        }
+
+        async function savePptToLibrary(fileId, versionId) {
+            try {
+                const api = getAxios();
+                const body = versionId ? { versionId } : {};
+                const r = await api.post(API + '/api/ai/chat/files/' + fileId + '/save-to-library', body);
+                if (r.data.code !== 200) throw new Error(r.data.message || '保存失败');
+                showToast(r.data.data?.message || '已存入文档库');
+            } catch(e) { handleError(e, '存入文档库失败'); }
+        }
+
+        // RAG
+        async function doRagQuery() {
+            if (!ragQuery.value.trim()) return;
+            ragHistory.value.push({ role: 'user', content: ragQuery.value });
+            const q = ragQuery.value; ragQuery.value = ''; ragLoading.value = true;
+            await nextTick();
+            scrollToBottom('ragMessages');
+
+            if (ragStrategy.value === 'hybrid' || ragStrategy.value === 'rerank') {
+                // 流式输出
+                const msgIdx = ragHistory.value.length;
+                ragHistory.value.push({ role: 'assistant', content: '', sources: [], streaming: true });
+                await nextTick();
+                try {
+                    const resp = await fetch(API + '/api/ai/rag/query/stream?strategy=' + ragStrategy.value, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token.value },
+                        body: JSON.stringify(q)
+                    });
+                    console.log('[SSE] response status:', resp.status, 'contentType:', resp.headers.get('content-type'));
+                    if (!resp.ok) {
+                        const errText = await resp.text();
+                        console.error('[SSE] error response:', errText);
+                        ragHistory.value[msgIdx].content = '查询失败: HTTP ' + resp.status + ' - ' + errText.substring(0, 200);
+                        ragHistory.value[msgIdx].streaming = false;
+                    } else {
+                        const reader = resp.body.getReader();
+                        const decoder = new TextDecoder();
+                        let buffer = '';
+                        let tokenCount = 0;
+                        let rawLineCount = 0;
+                        function processLine(line) {
+                            if (line.startsWith('data: ')) {
+                                // space after data:
+                            } else if (line.startsWith('data:')) {
+                                line = 'data: ' + line.substring(5);
+                            } else {
+                                return;
+                            }
+                            const data = line.substring(6).trim();
+                            if (!data || data === '[DONE]') return;
+                            try {
+                                const evt = JSON.parse(data);
+                                if (evt.type === 'sources') {
+                                    console.log('[SSE] sources event:', evt.sources?.length, 'docs');
+                                    ragHistory.value[msgIdx].sources = evt.sources || [];
+                                } else if (evt.type === 'token') {
+                                    tokenCount++;
+                                    ragHistory.value[msgIdx].content += evt.content;
+                                    if (tokenCount <= 3) console.log('[SSE] token #' + tokenCount + ':', evt.content);
+                                } else if (evt.type === 'error') {
+                                    ragHistory.value[msgIdx].content += '\n\n错误: ' + evt.message;
+                                }
+                            } catch(e) { console.warn('[SSE] parse error:', e, 'line:', line); }
+                        }
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            const chunk = decoder.decode(value, { stream: true });
+                            rawLineCount++;
+                            if (rawLineCount <= 3) console.log('[SSE] raw chunk #' + rawLineCount + ':', JSON.stringify(chunk.substring(0, 200)));
+                            buffer += chunk;
+                            const lines = buffer.split('\n');
+                            buffer = lines.pop();
+                            for (const line of lines) {
+                                processLine(line);
+                            }
+                        }
+                        if (buffer.trim()) processLine(buffer.trim());
+                        console.log('[SSE] stream done, total tokens:', tokenCount, 'content length:', ragHistory.value[msgIdx].content.length);
+                        ragHistory.value[msgIdx].streaming = false;
+                    }
+                } catch(e) {
+                    console.error('[SSE] fetch error:', e);
+                    ragHistory.value[msgIdx].content = '查询失败: ' + e.message;
+                    ragHistory.value[msgIdx].streaming = false;
+                }
+            } else {
+                // 非流式（vector 策略）
+                try {
+                    const api = getAxios();
+                    const r = await api.get(API + '/api/ai/rag/search', { params: { query: q, topK: 3 } });
+                    const data = r.data.data;
+                    let answer = Array.isArray(data) ? data.map(d => `[相关度 ${(d.score||d.rerankScore||0).toFixed(2)}] ${d.content}`).join('\n\n') : JSON.stringify(data, null, 2);
+                    ragHistory.value.push({ role: 'assistant', content: answer });
+                } catch(e) { ragHistory.value.push({ role: 'assistant', content: '查询失败: ' + (e.response?.data?.message || e.message) }); }
+            }
+            ragLoading.value = false;
+            await nextTick(); scrollToBottom('ragMessages');
+        }
+
+        // RAG Manage
+        function isRagDocumentFile(file) {
+            const name = (file.name || '').toLowerCase();
+            const blocked = ['.jpg','.jpeg','.png','.gif','.bmp','.svg','.mp3','.mp4','.avi','.mov','.wmv','.flv','.zip','.rar','.7z','.tar','.gz','.exe','.dll','.so','.bin'];
+            return !blocked.some(ext => name.endsWith(ext));
+        }
+
+        function handleRagFileSelect(e) {
+            const files = Array.from(e.target.files);
+            const valid = files.filter(f => {
+                if (!isRagDocumentFile(f)) {
+                    showToast(f.name + ' 不支持该文件格式', 'error');
+                    return false;
+                }
+                return true;
+            });
+            const newItems = valid.map(f => ({ name: f.name, size: f.size, file: f, status: 'pending' }));
+            ragManageFiles.value = ragManageFiles.value.concat(newItems);
+            e.target.value = '';
+        }
+
+        function handleRagDrop(e) {
+            const files = Array.from(e.dataTransfer.files);
+            const valid = files.filter(f => {
+                if (!isRagDocumentFile(f)) {
+                    showToast(f.name + ' 不支持该文件格式', 'error');
+                    return false;
+                }
+                return true;
+            });
+            const newItems = valid.map(f => ({ name: f.name, size: f.size, file: f, status: 'pending' }));
+            ragManageFiles.value = ragManageFiles.value.concat(newItems);
+        }
+
+        async function uploadRagFiles() {
+            ragUploading.value = true;
+            const api = getAxios();
+            let successCount = 0;
+            let failCount = 0;
+            for (const f of ragManageFiles.value) {
+                if (f.status === 'done') continue;
+                f.status = 'uploading';
+                try {
+                    const form = new FormData();
+                    form.append('file', f.file);
+                    const r = await api.post(API + '/api/ai/rag/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                    if (r.data.code !== 200) {
+                        throw new Error(r.data.message || '索引失败');
+                    }
+                    f.status = 'done';
+                    successCount++;
+                } catch(e) {
+                    f.status = 'error';
+                    failCount++;
+                    showToast(f.name + ' 上传失败: ' + (e.response?.data?.message || e.message), 'error');
+                }
+            }
+            ragUploading.value = false;
+            if (failCount === 0) {
+                showToast('上传完成，共 ' + successCount + ' 个文件已索引');
+            } else {
+                showToast('完成：成功 ' + successCount + ' 个，失败 ' + failCount + ' 个', 'error');
+            }
+            loadRagDocuments();
+        }
+
+        async function loadRagDocuments() {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/rag/documents/list');
+                ragDocList.value = r.data.data || [];
+                ragDocPage.value = 1;
+            } catch(e) { handleError(e, '加载知识库文档失败'); }
+        }
+
+        async function loadRagImportCandidates() {
+            ragImportLoading.value = true;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/rag/import/candidates');
+                ragImportCandidates.value = r.data.data || [];
+                ragImportSelected.value = ragImportSelected.value.filter(id =>
+                    ragImportCandidates.value.some(c => c.sourceDocumentId === id && c.syncStatus !== 'INDEXED'));
+            } catch(e) {
+                handleError(e, '加载文档库列表失败');
+            }
+            ragImportLoading.value = false;
+        }
+
+        function toggleAllRagImport(e) {
+            if (e.target.checked) {
+                ragImportSelected.value = ragImportCandidates.value
+                    .filter(c => c.syncStatus !== 'INDEXED')
+                    .map(c => c.sourceDocumentId);
+            } else {
+                ragImportSelected.value = [];
+            }
+        }
+
+        async function importFromLibrary(doc, reindex) {
+            ragImportLoading.value = true;
+            try {
+                const api = getAxios();
+                const r = await api.post(API + '/api/ai/rag/import/from-library/' + encodeURIComponent(doc.sourceDocumentId) + '?reindex=' + reindex);
+                if (r.data.code !== 200) {
+                    throw new Error(r.data.message || '导入失败');
+                }
+                showToast(reindex ? ('重新索引成功，共 ' + (r.data.data?.chunkCount || '?') + ' 个切片') : ('导入成功，共 ' + (r.data.data?.chunkCount || '?') + ' 个切片'));
+                await loadRagDocuments();
+                await loadRagImportCandidates();
+            } catch(e) {
+                showToast((doc.title || '文档') + ' 操作失败: ' + (e.response?.data?.message || e.message), 'error');
+            }
+            ragImportLoading.value = false;
+        }
+
+        async function batchImportFromLibrary(reindex) {
+            if (!ragImportSelected.value.length) return;
+            ragImportLoading.value = true;
+            try {
+                const api = getAxios();
+                const r = await api.post(API + '/api/ai/rag/import/batch', {
+                    documentIds: ragImportSelected.value,
+                    reindex: !!reindex
+                });
+                if (r.data.code !== 200) {
+                    throw new Error(r.data.message || '批量导入失败');
+                }
+                const summary = r.data.data || {};
+                showToast('导入完成：成功 ' + (summary.success || 0) + '，跳过 ' + (summary.skipped || 0) + '，失败 ' + (summary.failed || 0));
+                ragImportSelected.value = [];
+                await loadRagDocuments();
+                await loadRagImportCandidates();
+            } catch(e) {
+                showToast('批量导入失败: ' + (e.response?.data?.message || e.message), 'error');
+            }
+            ragImportLoading.value = false;
+        }
+
+        async function reindexRagFromLibrary(doc) {
+            if (!doc.sourceDocumentId) return;
+            await importFromLibrary({ sourceDocumentId: doc.sourceDocumentId, title: doc.fileName }, true);
+        }
+
+        async function deleteRagDocument(documentId) {
+            if (!await showConfirm('删除知识库文档', '确定要从知识库中删除此文档吗？向量化数据将被清除。')) return;
+            try {
+                const api = getAxios();
+                await api.delete(API + '/api/ai/rag/document/' + documentId);
+                showToast('删除成功');
+                loadRagDocuments();
+                loadRagImportCandidates();
+            } catch(e) { handleError(e, '删除失败'); }
+        }
+
+        // Agent
+        async function startAgentChat() {
+            try {
+                const api = getAxios();
+                const r = await api.post(API + '/api/ai/agent/chat/start', null, { params: { userId: currentUser.id } });
+                agentConversationId.value = r.data.data;
+                agentHistory.value = [];
+                showToast('会话已开始');
+            } catch(e) { handleError(e, '启动会话失败'); }
+        }
+
+        async function sendAgentMessage() {
+            if (!agentInput.value.trim() || !agentConversationId.value) return;
+            agentHistory.value.push({ role: 'user', content: agentInput.value });
+            const msg = agentInput.value; agentInput.value = ''; agentLoading.value = true;
+            await nextTick();
+            try {
+                const api = getAxios();
+                const r = await api.post(API + '/api/ai/agent/chat', JSON.stringify(msg), {
+                    params: { conversationId: agentConversationId.value }, headers: { 'Content-Type': 'application/json' }
+                });
+                const data = r.data.data;
+                agentHistory.value.push({ role: 'assistant', content: data?.response || JSON.stringify(data) });
+            } catch(e) { agentHistory.value.push({ role: 'assistant', content: '错误: ' + (e.response?.data?.message || e.message) }); }
+            finally { agentLoading.value = false; await nextTick(); scrollToBottom('agentMessages'); }
+        }
+
+        async function endAgentChat() {
+            if (!agentConversationId.value) return;
+            try {
+                const api = getAxios();
+                await api.post(API + '/api/ai/agent/chat/' + agentConversationId.value + '/end');
+                agentConversationId.value = '';
+                showToast('会话已结束');
+            } catch(e) { handleError(e, '结束会话失败'); }
+        }
+
+        // Plan
+        async function executePlan() {
+            planLoading.value = true; planResult.value = null;
+            try {
+                const api = getAxios();
+                const r = await api.post(API + '/api/ai/agent/plan/execute', JSON.stringify(planTask.value), { headers: { 'Content-Type': 'application/json' } });
+                planResult.value = r.data.data;
+            } catch(e) { handleError(e, '执行计划失败'); }
+            finally { planLoading.value = false; }
+        }
+
+        // AIOps
+        async function loadAIOpsMetrics() {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/aiops/monitor');
+                Object.assign(aiopsMetrics, r.data.data || {});
+            } catch(e) { handleError(e, '加载指标失败'); }
+            loadDailyTrends();
+            loadAlertRecords();
+        }
+
+        async function loadAlertRecords() {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/aiops/alerts');
+                alertRecords.value = r.data.data || [];
+            } catch(e) { /* silently ignore */ }
+        }
+
+        async function loadDailyTrends() {
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/aiops/monitor/daily');
+                dailyTrends.value = r.data.data || [];
+                renderTokenChart();
+            } catch(e) { /* 静默处理 */ }
+        }
+
+        function renderTokenChart() {
+            const canvas = document.getElementById('tokenChart');
+            if (!canvas || !dailyTrends.value.length) return;
+            if (tokenChartInstance) tokenChartInstance.destroy();
+
+            const sorted = [...dailyTrends.value].sort((a, b) => a.date.localeCompare(b.date));
+            const labels = sorted.map(d => d.date.substring(5));
+            const ragInput = sorted.map(d => d.ragTokensInput || 0);
+            const ragOutput = sorted.map(d => d.ragTokensOutput || 0);
+            const pptInput = sorted.map(d => d.pptTokensInput || 0);
+            const pptOutput = sorted.map(d => d.pptTokensOutput || 0);
+
+            tokenChartInstance = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'RAG Input', data: ragInput, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+                        { label: 'RAG Output', data: ragOutput, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+                        { label: 'PPT Input', data: pptInput, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', fill: true, tension: 0.3, borderWidth: 2 },
+                        { label: 'PPT Output', data: pptOutput, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: true, tension: 0.3, borderWidth: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { family: "'Fira Sans', sans-serif", size: 12 } } } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v }, grid: { color: '#F1F5F9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        async function resetMetrics() {
+            if (!await showConfirm('重置监控', '确定要重置所有监控指标吗？')) return;
+            try {
+                const api = getAxios();
+                await api.post(API + '/api/ai/aiops/reset');
+                showToast('指标已重置'); aiAnalysis.value = ''; loadAIOpsMetrics();
+            } catch(e) { handleError(e, '重置失败'); }
+        }
+
+        async function runAiAnalysis() {
+            aiAnalysisLoading.value = true;
+            try {
+                const api = getAxios();
+                const r = await api.get(API + '/api/ai/aiops/analyze');
+                aiAnalysis.value = r.data.data?.analysis || '无分析结果';
+            } catch(e) { handleError(e, 'AI分析失败'); }
+            finally { aiAnalysisLoading.value = false; }
+        }
+
+        // Utils
+        function formatTime(t) {
+            if (!t) return '-';
+            const d = new Date(t);
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        }
+
+        function formatSize(s) {
+            if (!s) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let i = 0; let size = s;
+            while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+            return size.toFixed(1) + ' ' + units[i];
+        }
+
+        function scrollToBottom(refName) {
+            nextTick(() => {
+                const el = document.querySelector('.chat-messages');
+                if (el) el.scrollTop = el.scrollHeight;
+            });
+        }
+
+        // Init
+        onMounted(() => {
+            if (token.value) {
+                const saved = localStorage.getItem('docmanager_user');
+                if (saved) Object.assign(currentUser, JSON.parse(saved));
+                loadDashboardData();
+            }
+        });
+
+        return {
+            token, authMode, authError, authLoading, loginForm, registerForm, currentUser,
+            currentPage, showModal, toast, pageTitle, confirmData, doConfirm, cancelConfirm,
+            fileList, filePage, fileTotalPages, fileSearchKeyword, fileTypeFilter, fileOwnerFilterUserId, uploadFiles, uploading, renameNewName,
+            docList, docSearchKeyword, docTypeFilter, docOwnerFilterUserId, userList, manageUserList, isAdmin, globalDocVersion,
+            passwordForm, passwordLoading, resetPasswordUsername,
+            recentDocs, versionList, versionDocTitle, versionDocId,
+            newVersionDocId, newVersionDocTitle, newVersionNumber, newVersionChangeLog, newVersionFile,
+            branchList, branchDocId, branchDocTitle, activeBranchView, showBranchModal, newBranchName,
+            sourceBranchForCreate, mergeSource, mergeTarget,
+            aiChatHistory, aiChatInput, aiChatLoading, aiChatFormat, aiGeneratedFiles, pptConversationId,
+            pptRefinable, pptLastFileId, pptVersions, pptCurrentVersionId, pptDraftVersionId, pptVersionLoading, pptChatPlaceholder,
+            pptRefs, pptRefUploading, pptRefPreferredRole, pptLibraryCandidates, pptLibraryLoading,
+            ragQuery, ragStrategy, ragHistory, ragLoading, chatDragActive, startChatDrag,
+            ragManageFiles, ragDocList, ragDocPage, ragDocPageSize, ragDocTotalPages, ragDocListPaginated, ragUploading,
+            ragImportCandidates, ragImportLoading, ragImportSelected,
+            handleRagFileSelect, handleRagDrop, uploadRagFiles, loadRagDocuments, loadRagImportCandidates,
+            importFromLibrary, batchImportFromLibrary, reindexRagFromLibrary, toggleAllRagImport, deleteRagDocument,
+            aiopsMetrics, aiAnalysis, aiAnalysisLoading, runAiAnalysis, dailyTrends, alertRecords, stats,
+            login, register, logout, goTo, resolveUserIdByName,
+            loadFiles, searchFiles, filterByType, resetFileType, handleFileSelect, handleDrop, uploadAllFiles, downloadFile, previewFile, deleteFile, showRenameModal, doRename,
+            loadDocuments, searchDocFiles, filterDocByType, downloadDocFile, previewDoc, showNewVersionModal, onNewVersionFileSelect, uploadNewVersion, showDocVersions, restoreDocVersion, deleteDocFile, getFileTypeLabel,
+            loadUserList, loadManageUsers, openResetPasswordModal, submitAdminResetPassword, toggleUserStatus,
+            openChangePasswordModal, changeMyPassword,
+            showBranches, showCreateBranchModal, showMergeModal, createBranch, mergeBranch, deleteBranch,
+            checkoutBranch, isActiveBranch, showBranchVersions, showNewVersionModalFromBranch, switchToBranch,
+            sendAiChat, startNewPptSession, loadPptVersions, applyPptVersion, rollbackPptVersion, discardPptDraft, previewPptVersion,
+            loadAiGeneratedFiles, loadPptRefs, handlePptRefFileSelect, handlePptRefDrop,
+            loadPptLibraryCandidates, attachPptRefFromLibrary, removePptRef,
+            downloadGeneratedFile, previewGeneratedFile, deleteGeneratedFile, savePptToLibrary,
+            doRagQuery,
+            loadAIOpsMetrics, loadDailyTrends, loadAlertRecords, resetMetrics,
+            formatTime, formatSize
+        };
+    }
+}).mount('#app');
+</script>
+</body>
+</html>

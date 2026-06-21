@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.javaee.docmanager.ai.aiops.MetricsDailyMapper">
+
+    <select id="selectByUserId" resultType="com.javaee.docmanager.ai.aiops.MetricsDaily">
+        SELECT * FROM metrics_daily
+        WHERE user_id = #{userId}
+        ORDER BY date DESC
+        LIMIT 30
+    </select>
+
+    <select id="selectByUserIdAndDateRange" resultType="com.javaee.docmanager.ai.aiops.MetricsDaily">
+        SELECT * FROM metrics_daily
+        WHERE user_id = #{userId}
+          AND date &gt;= #{startDate}
+          AND date &lt;= #{endDate}
+        ORDER BY date ASC
+    </select>
+
+    <insert id="insertOrUpdate" parameterType="com.javaee.docmanager.ai.aiops.MetricsDaily">
+        INSERT INTO metrics_daily (
+            user_id, date,
+            rag_tokens_input, rag_tokens_output,
+            ppt_tokens_input, ppt_tokens_output,
+            rag_doc_count, rag_slice_count, ppt_count
+        ) VALUES (
+            #{userId}, #{date},
+            #{ragTokensInput}, #{ragTokensOutput},
+            #{pptTokensInput}, #{pptTokensOutput},
+            #{ragDocCount}, #{ragSliceCount}, #{pptCount}
+        )
+        ON DUPLICATE KEY UPDATE
+            rag_tokens_input = VALUES(rag_tokens_input),
+            rag_tokens_output = VALUES(rag_tokens_output),
+            ppt_tokens_input = VALUES(ppt_tokens_input),
+            ppt_tokens_output = VALUES(ppt_tokens_output),
+            rag_doc_count = VALUES(rag_doc_count),
+            rag_slice_count = VALUES(rag_slice_count),
+            ppt_count = VALUES(ppt_count)
+    </insert>
+
+</mapper>

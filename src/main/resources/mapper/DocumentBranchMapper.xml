@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.javaee.docmanager.doc.mapper.DocumentBranchMapper">
+
+    <select id="selectByDocumentId" resultType="com.javaee.docmanager.doc.entity.DocumentFile">
+        SELECT * FROM document_file
+        WHERE document_id = #{documentId} AND status = 'active'
+        ORDER BY CASE WHEN branch_name = 'main' THEN 0 ELSE 1 END, branch_name
+    </select>
+
+    <select id="selectByDocumentIdAndBranch" resultType="com.javaee.docmanager.doc.entity.DocumentFile">
+        SELECT * FROM document_file
+        WHERE document_id = #{documentId} AND branch_name = #{branchName} AND status = 'active'
+        LIMIT 1
+    </select>
+
+    <update id="deleteBranchesByDocumentId">
+        UPDATE document_file
+        SET status = 'deleted', update_time = NOW()
+        WHERE document_id = #{documentId}
+    </update>
+
+    <update id="deleteByDocumentIdAndBranch">
+        UPDATE document_file
+        SET status = 'deleted', update_time = NOW()
+        WHERE document_id = #{documentId} AND branch_name = #{branchName} AND branch_name != 'main'
+    </update>
+
+</mapper>
