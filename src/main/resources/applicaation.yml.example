@@ -1,0 +1,112 @@
+server:
+  port: 8080
+
+spring:
+  autoconfigure:
+    exclude: org.springframework.ai.autoconfigure.openai.OpenAiAutoConfiguration
+  application:
+    name: docmanager
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/doc_ai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: your_mysql_password # 数据库密码
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 10000
+
+  elasticsearch:
+    uris: http://localhost:9200
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      properties:
+        max.block.ms: 2000
+        delivery.timeout.ms: 5000
+        request.timeout.ms: 2000
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+
+  main:
+    allow-bean-definition-overriding: true
+
+  ai:
+    dashscope:
+      api-key: your-dashscope-api-key # 可以申请阿里云api_key（主要负责功能：Embedding、Rerank、通义对话等）
+      embedding:
+        model: text-embedding-v4
+        dimension: 1024
+      chat:
+        model: qwen-plus
+      rerank:
+        model: gte-rerank-v2
+
+ai:
+  anthropic:
+    api-key: your-anthropic-or-compatible-api-key # 这里可以申请代理，这边提供一种参考（主要负责功能：AI 聊天、PPT 生成、RAG 问答）
+    base-url: https://aihubmix.com/v1
+    chat:
+      model: claude-haiku-4-5
+    max-tokens: 4096
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.javaee.docmanager.user.entity,com.javaee.docmanager.file.entity,com.javaee.docmanager.doc.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: doc-ai
+  secure: false
+
+file:
+  storage:
+    type: minio
+    local-path: ./data/file-storage
+    max-size: 1024
+
+qdrant:
+  host: localhost
+  rest-port: 6333
+
+mcp:
+  server:
+    enabled: false
+    url: http://localhost:3000/mcp
+
+aiops:
+  metrics:
+    archive:
+      cron: "0 5 0 * * ?"
+  error-log:
+    ai-analysis:
+      enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.javaee.docmanager: debug
+
+ppt:
+  reference:
+    primary-max-chars: 12000
+    secondary-top-k: 6

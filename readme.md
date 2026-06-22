@@ -93,6 +93,9 @@ docker run -d --name minio \
 
 # Qdrant
 docker run -d --name qdrant -p 6333:6333 qdrant/qdrant
+
+# 一键启动
+docker-compose up -d
 ```
 
 启动 MinIO 后，在控制台创建与配置文件中 `minio.bucket-name` 一致的存储桶（如 `doc-ai`）。
@@ -118,7 +121,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/doc_ai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: your_mysql_password
+    password: your_mysql_password # 数据库密码
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   data:
@@ -151,7 +154,7 @@ spring:
 
   ai:
     dashscope:
-      api-key: your-dashscope-api-key
+      api-key: your-dashscope-api-key # 可以申请阿里云api_key（主要负责功能：Embedding、Rerank、通义对话等）
       embedding:
         model: text-embedding-v4
         dimension: 1024
@@ -162,7 +165,7 @@ spring:
 
 ai:
   anthropic:
-    api-key: your-anthropic-or-compatible-api-key
+    api-key: your-anthropic-or-compatible-api-key # 这里可以申请代理，这边提供一种参考（主要负责功能：AI 聊天、PPT 生成、RAG 问答）
     base-url: https://aihubmix.com/v1
     chat:
       model: claude-haiku-4-5
@@ -221,6 +224,8 @@ ppt:
 ```
 
 > **安全提示**：请勿将含真实 API Key 和密码的 `application.yml` 提交到版本库。
+
+以上内容可在 src\main\resources\applicaation.yml.example 中找到，可以直接使用这个文档进行配置，修改密码等，改完将后缀 .example 去掉即可
 
 ### 5. 编译并启动
 
