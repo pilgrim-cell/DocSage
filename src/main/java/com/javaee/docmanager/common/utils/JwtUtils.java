@@ -28,19 +28,6 @@ public class JwtUtils {
      * 生成访问令牌
      * @param userId 用户ID
      * @param username 用户名
-     * @return 令牌
-     */
-    public static String generateToken(Long userId, String username) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(CommonConstant.TOKEN_CLAIM_USER_ID, userId);
-        claims.put(CommonConstant.TOKEN_CLAIM_USERNAME, username);
-        return generateToken(claims, TOKEN_EXPIRATION);
-    }
-
-    /**
-     * 生成访问令牌
-     * @param userId 用户ID
-     * @param username 用户名
      * @param role 角色
      * @return 令牌
      */
